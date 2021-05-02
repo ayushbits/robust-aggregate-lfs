@@ -22,7 +22,7 @@ class LemmaTokenizer(object):
 
 def load_youtube_dataset(load_train_labels: bool = False, split_dev: bool = True):
 
-    filenames = sorted(glob.glob("/home/ayusham/Semi_Supervised_LFs/Data/YOUTUBE/data/Youtube*.csv"))
+    filenames = sorted(glob.glob("/home/ayusham/auto_lfs/reef/data/youtube/Youtube*.csv"))
 
     dfs = []
     for i, filename in enumerate(filenames, start=1):
@@ -64,7 +64,7 @@ def load_youtube_dataset(load_train_labels: bool = False, split_dev: bool = True
 #     else:
 #         return df_train, df_valid, df_test
 
-def split_data(X, plots, y):
+def split_data(X, plots, y, split_val = 0.1):
     np.random.seed(1234)
     num_sample = np.shape(X)[0]
     num_test = 500
@@ -79,7 +79,7 @@ def split_data(X, plots, y):
     y_train = y[num_test:]
 
     # split dev/test
-    test_ratio = 0.2
+    test_ratio = split_val
     X_tr, X_te, y_tr, y_te, plots_tr, plots_te = cross_validation.train_test_split(X_train, y_train, plots_train, test_size = test_ratio, random_state=25)
 
     return np.array(X_tr.todense()), np.array(X_te.todense()), np.array(X_test.todense()),np.array(y_tr), np.array(y_te), np.array(y_test), plots_tr, plots_te, plots_test
@@ -100,25 +100,24 @@ class DataLoader(object):
 
         return common_idx
 
-    def load_data(self, dataset, data_path=''):
-        #Parse Files
+    def load_data(self, dataset, data_path='', split_val=0.1):
         plots, labels = load_youtube_dataset()
         #Featurize Plots  
         # vectorizer = CountVectorizer(min_df=1, binary=True, stop_words='english'  decode_error='ignore', strip_accents='ascii', ngram_range=(1,2))
 
-        # vectorizer = CountVectorizer(min_df=1, binary=True,   decode_error='ignore', ngram_range=(1,2) ,\
-        # tokenizer=LemmaTokenizer(),strip_accents = 'unicode', stop_words = 'english', lowercase = True)
+        vectorizer = CountVectorizer(min_df=1, binary=True,   decode_error='ignore', ngram_range=(1,2) ,\
+        tokenizer=LemmaTokenizer(),strip_accents = 'unicode', stop_words = 'english', lowercase = True)
         
-        nlp = spacy.load("en")
-        # doc = nlp(plots)
-        phrases = set()
-        for i in plots:
-            doc = nlp(str(i))
-            for np in doc.noun_chunks:
-                phrases.add(np)
-        print('length of phrases', len(phrases))
-        vectorizer = CountVectorizer(vocabulary = phrases, min_df=1, binary=True, stop_words='english' ,\
-          decode_error='ignore', strip_accents='ascii', ngram_range=(1,2))
+        # nlp = spacy.load("en")
+        # # doc = nlp(plots)
+        # phrases = set()
+        # for i in plots:
+        #     doc = nlp(str(i))
+        #     for np in doc.noun_chunks:
+        #         phrases.add(np)
+        # print('length of phrases', len(phrases))
+        # vectorizer = CountVectorizer(vocabulary = phrases, min_df=1, binary=True, stop_words='english' ,\
+        #   decode_error='ignore', strip_accents='ascii', ngram_range=(1,2))
         
         # print(plots)
         X = vectorizer.fit_transform(plots)
@@ -128,7 +127,7 @@ class DataLoader(object):
         #Split Dataset into Train, Val, Test
         train_primitive_matrix, val_primitive_matrix, test_primitive_matrix, \
         train_ground, val_ground, test_ground,\
-        train_plots, val_plots, test_plots = split_data(X, plots, labels)
+        train_plots, val_plots, test_plots = split_data(X, plots, labels, split_val)
 
         #Prune Feature Space
         common_idx = self.prune_features(val_primitive_matrix, train_primitive_matrix)

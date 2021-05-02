@@ -71,7 +71,7 @@ def parse_file(filename):
     print('len of data',len(plots))
     return np.array(plots), np.array(gt)
 
-def split_data(X, plots, y):
+def split_data(X, plots, y, split_val=0.1):
     np.random.seed(1234)
     num_sample = np.shape(X)[0]
     num_test = 500
@@ -85,8 +85,9 @@ def split_data(X, plots, y):
     y_train = y[num_test:]
 
     # split dev/test
-    test_ratio = 0.2
-    X_tr, X_te, y_tr, y_te, plots_tr, plots_te =cross_validation.train_test_split(X_train, y_train, plots_train, test_size = test_ratio, random_state=25)
+    test_ratio = split_val
+    X_tr, X_te, y_tr, y_te, plots_tr, plots_te =\
+    cross_validation.train_test_split(X_train, y_train, plots_train, test_size = test_ratio, random_state=25)
 #     with open('trec_val.txt','w+') as f:
 #         for i,j in zip(plots_te, y_te):
 # #             x = ji
@@ -112,17 +113,18 @@ class DataLoader(object):
 
         return common_idx
 
-    def load_data(self, dataset, data_path='/home/ayusham/Semi_Supervised_LFs/Data/TREC/'):
+    def load_data(self, dataset, data_path='/home/ayusham/auto_lfs/reef/data/trec/',split_val=0.1):
      
         plots, labels = parse_file(data_path+'all.txt')
+
         def mytokenizer(text):
             return text.split()
         
         #Featurize Plots  
     # niche ki  line original code ka bhag hai
-        vectorizer = CountVectorizer(min_df=1, binary=True,   decode_error='ignore', ngram_range=(1,2) ,\
-        tokenizer=LemmaTokenizer(),strip_accents = 'unicode', stop_words = 'english', lowercase = True)
-        # vectorizer = CountVectorizer(min_df=1, binary=True, stop_words='english', \
+        vectorizer = CountVectorizer(min_df=1, binary=True, decode_error='ignore', ngram_range=(1,2) ,\
+        tokenizer=LemmaTokenizer(), lowercase = True)
+        # vectorizer = CountVectorizer(min_df=1, stop_words='english', \
         #     decode_error='ignore', strip_accents='ascii', ngram_range=(1,2))
 
 #         vocab = {'name':0,'name a':1,'how':2,'how does':3,'how to':4,'how can':5,'how should':6,'how would':7,'how could':8,'how will':9,'how do':10,'what':11,'what is':12,'what fastener':13,'how do you':14,'who':15,'who person':16,'who man':17,'who woman':18,'who human':19,'who president':20,'what person':21,'what man':22,'what woman':23,'what human':24,'what president':25,'how much':26,'how many':27,'what kind':28,'what amount':29,'what number':30,'what percentage':31,'capital':32,'capital of':33,'why':34,'why does':35,'why should':36,'why shall':37,'why could':38,'why would':39,'why will':40,'why can':41,'why do':42,'composed':43,'made':44,'composed from':45,'composed through':46,'composed using':47,'composed by':48,'composed of':49,'made from':50,'made through':51,'made using':52,'made by':53,'made of':54,'where':55,'which':56,'where island':57,'which island':58,'what island':59,'who owner':60,'who leads':61,'who governs':62,'who pays':63,'who owns':64,'what is tetrinet':65,'who found':66,'who discovered':67,'who made':68,'who built':69,'who build':70,'who invented':71,'why doesn':72,'used':73,'used for':74,'when':75,'when did':76,'when do':77,'when does':78,'when was':79,'how old':80,'how far':81,'how long':82,'how tall':83,'how wide':84,'how short':85,'how small':86,'how close':87,'fear':88,'fear of':89,'explain':90,'describe':91,'explain can':92,'describe can':93,'who worked':94,'who lived':95,'who guarded':96,'who watched':97,'who played':98,'who ate':99,'who slept':100,'who portrayed':101,'who served':102,'what part':103,'what division':104,'what ratio':105,'who is':106,'who will':107,'who was':108,'what do':109,'what does':110,'enumerate the':111,'list out the':112,'name the':113,'enumerate the various':114,'list out the various':115,'name the various':116,'at which':117,'at how many':118,'at what':119,'in which':120,'in how many':121,'in what':122,'at which age':123,'at which year':124,'at how many age':125,'at how many year':126,'at what age':127,'at what year':128,'in which age':129,'in which year':130,'in how many age':131,'in how many year':132,'in what age':133,'in what year':134,'which play':135,'which game':136,'which movie':137,'which book':138,'what play':139,'what game':140,'what movie':141,'what book':142,'which is':143,'which will':144,'which are':145,'which was':146,'who are':147,'by how':148,'by how much':149,'by how many':150,'where was':151,'where is':152,'studied':153,'patent':154,'man':155,'woman':156,'human':157,'person':158,'stand':159,'mean':160,'meant':161,'called':162,'unusual':163,'origin':164,'country':165,'queen':166,'king':167,'year':168,'novel':169,'speed':170,'abbreviation':171,'percentage':172,'share':173,'number':174,'population':175,'located':176,'thing':177,'instance':178,'object':179,'demands':180,'take':181,'leader':182,'citizen':183,'captain':184,'nationalist':185,'hero':186,'actor':187,'actress':188,'star':189,'gamer':190,'player':191,'lawyer':192,'president':193,'lives':194,'latitude':195,'longitude':196,'alias':197,'nicknamed':198}
@@ -139,7 +141,7 @@ class DataLoader(object):
 #         Split Dataset into Train, Val, Test
         train_primitive_matrix, val_primitive_matrix, test_primitive_matrix, \
         train_ground, val_ground, test_ground,\
-        train_plots, val_plots, test_plots = split_data(X, plots, labels)
+        train_plots, val_plots, test_plots = split_data(X, plots, labels, split_val)
 
         #Prune Feature Space
         common_idx = self.prune_features(val_primitive_matrix, train_primitive_matrix)

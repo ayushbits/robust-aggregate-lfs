@@ -50,7 +50,7 @@ def parse_file(filename):
     
     return np.array(plots), np.array(gt)
 
-def split_data(X, plots, y):
+def split_data(X, plots, y, split_val=0.1):
     np.random.seed(1234)
     num_sample = np.shape(X)[0]
     num_test = 500
@@ -65,7 +65,7 @@ def split_data(X, plots, y):
     y_train = y[num_test:]
 
     # split dev/test
-    test_ratio = 0.2
+    test_ratio = split_val
     X_tr, X_te, y_tr, y_te, plots_tr, plots_te = \
         cross_validation.train_test_split(X_train, y_train, plots_train, test_size = test_ratio, random_state=25)
 
@@ -89,7 +89,7 @@ class DataLoader(object):
 
         return common_idx
 
-    def load_data(self, dataset, data_path='./data/imdb/'):
+    def load_data(self, dataset, data_path='/home/ayusham/auto_lfs/reef/data/imdb/',split_val=0.1):
         #Parse Files
         plots, labels = parse_file(data_path+'budgetandactors.txt')
         #read_plots('imdb_plots.tsv')
@@ -106,7 +106,7 @@ class DataLoader(object):
         #Split Dataset into Train, Val, Test
         train_primitive_matrix, val_primitive_matrix, test_primitive_matrix, \
             train_ground, val_ground, test_ground, \
-            train_plots, val_plots, test_plots = split_data(X, plots, labels)
+            train_plots, val_plots, test_plots = split_data(X, plots, labels, split_val)
 
         #Prune Feature Space
         common_idx = self.prune_features(val_primitive_matrix, train_primitive_matrix)

@@ -1,4 +1,9 @@
 # arguments - dataset(1) mode(random/all/normal)(2) model(dt/lr/nn)(3) cardinality(4) num_of_loops(5)
+# save directory (6)
+
+
+# python generic_generate_labels.py imdb normal dt 1 26 imdb_val2.5_sup5_dt1
+
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
@@ -11,7 +16,7 @@ from sklearn import model_selection as cross_validation
 warnings.filterwarnings("ignore")
 
 dataset= sys.argv[1]
-print(dataset)
+print('dataset is ', dataset)
 loader_file = "data." + dataset+"_loader"
 
 import importlib
@@ -19,17 +24,18 @@ import importlib
 load = importlib.import_module(loader_file)
 
 dl = load.DataLoader()
-train_primitive_matrix, val_primitive_matrix, test_primitive_matrix, train_ground, val_ground, test_ground, _, _, _, _,_,_ = dl.load_data(dataset=dataset)
+train_primitive_matrix, val_primitive_matrix, test_primitive_matrix, train_ground,\
+    val_ground, test_ground, _, _, _, _,_,_ = dl.load_data(dataset=dataset, split_val = 0.1)
 
-val_primitive_matrix, val_primitive_matrix_heuristic,  val_ground, val_ground_heuristic= \
-        cross_validation.train_test_split(val_primitive_matrix, val_ground, test_size = 0.5, random_state=25)
+# val_primitive_matrix_heuristic, val_primitive_matrix, val_ground_heuristic,  val_ground= \
+#         cross_validation.train_test_split(val_primitive_matrix, val_ground, test_size = 0.5, random_state=25)
 
-print('Size of validation heuristic set ', len(val_ground_heuristic))
+# print('Size of validation heuristic set ', len(val_ground))
 print('Size of validation set ', len(val_ground))
 print('Size of train set ', len(train_ground))
 print('Size of test set ', len(test_ground))
 
-print(val_primitive_matrix.shape, val_primitive_matrix_heuristic.shape)
+print('val_primitive_matrix.shape', val_primitive_matrix.shape)
 
 num_classes = len(np.unique(train_ground))
 model = sys.argv[3]
@@ -49,7 +55,12 @@ vals=[]
 
 mode=sys.argv[2]
 
-save_path = "generated_data/" + dataset #+ "/" + mode
+
+save_dir = sys.argv[6]
+
+save_path = "LFs/"+ dataset + "/" + save_dir
+os.makedirs(save_path, exist_ok=True) 
+# save_path = "generated_data/" + dataset #+ "/" + mode
 print('save_path', save_path)
 val_file_name = mode + '_val_LFs.npy'
 train_file_name = mode + '_train_LFs.npy'
@@ -78,8 +89,8 @@ for j in range(0,1):
 
     if j == 0:
         # print('value of j',j)
-        hg = HeuristicGenerator(train_primitive_matrix, val_primitive_matrix_heuristic, test_primitive_matrix,
-                        test_ground, val_ground_heuristic, train_ground, b=0.5)
+        hg = HeuristicGenerator(train_primitive_matrix, val_primitive_matrix, test_primitive_matrix,
+                        test_ground, val_ground, train_ground, b=0.5)
 
 
     for i in range(3,num_loop):
@@ -185,7 +196,10 @@ d_l[np.where(d_l==0)]=-1
 d_l[np.where(d_l==10)]=0
 d_l, d_m = lsnork_to_l_m(d_l, num_classes)
 
-pickle_save = "generated_data/"+dataset
+save_dir = sys.argv[6]
+
+pickle_save = "LFs/"+ dataset + "/" + save_dir
+
 
 file_name = mode + '_d_processed.p'
 with open(os.path.join(pickle_save, file_name),"wb") as f:
@@ -220,8 +234,8 @@ with open(os.path.join(pickle_save, file_name),"wb") as f:
 
 
 
-val_L = val_ground_heuristic
-val_x = val_primitive_matrix_heuristic #features
+val_L = val_ground
+val_x = val_primitive_matrix #features
 val_l = valx.copy() #L
 val_d = np.array([1.0] * len(val_x))
 val_r = np.zeros(val_l.shape) #rule exemplar coupling unavailable
