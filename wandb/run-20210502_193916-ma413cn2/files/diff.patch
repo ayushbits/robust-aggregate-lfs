@@ -1,0 +1,13 @@
+diff --git a/ss_generic.py b/ss_generic.py
+index 89075ef..dfc915c 100644
+--- a/ss_generic.py
++++ b/ss_generic.py
+@@ -7,7 +7,7 @@ import warnings
+ warnings.filterwarnings("ignore")
+ from cage import *
+ from sklearn.feature_extraction.text import TfidfVectorizer
+-from losses import *
++# from losses import *
+ import pickle
+ from torch.utils.data import TensorDataset, DataLoader
+ import wandb

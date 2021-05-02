@@ -1,0 +1,43 @@
+{
+    "os": "Linux-4.15.0-47-generic-x86_64-with-debian-buster-sid",
+    "python": "3.6.8",
+    "heartbeatAt": "2021-05-02T14:10:26.217671",
+    "startedAt": "2021-05-02T14:10:21.681592",
+    "docker": null,
+    "gpu": "GeForce RTX 2080 Ti",
+    "gpu_count": 3,
+    "cpu_count": 56,
+    "cuda": null,
+    "args": [
+        "/tmp",
+        "l1",
+        "l2",
+        "0",
+        "l4",
+        "0",
+        "l6",
+        "qg",
+        "3",
+        "reef/LFs/youtube/val_5_lemma_dt1",
+        "2",
+        "lr",
+        "0",
+        "32",
+        "0.0001",
+        "0.01",
+        "normal",
+        "accuracy"
+    ],
+    "state": "running",
+    "codePath": "ss_generic.py",
+    "program": "ss_generic.py",
+    "git": {
+        "remote": "https://github.com/ayushbits/auto-generate-lfs.git",
+        "commit": "cad524926bb5ced9a11c95d0bc1a2706346ff78f"
+    },
+    "email": "ayush.hakmn@gmail.com",
+    "root": "/home/ayusham/auto_lfs",
+    "host": "raigad",
+    "username": "ayusham",
+    "executable": "/home/ayusham/.conda/envs/poincare/bin/python3"
+}
