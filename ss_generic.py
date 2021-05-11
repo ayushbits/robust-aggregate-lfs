@@ -132,7 +132,7 @@ x_test = torch.tensor(objs1[0]).double()
 y_test = objs1[3]
 l_test = torch.tensor(objs1[2]).long()
 s_test = torch.tensor(objs1[2]).double()
-print('Test shape', objs[2].shape)
+print('Test shape', objs1[2].shape)
 
 n_features = x_supervised.shape[1]
 
@@ -388,9 +388,9 @@ for lo in range(0,num_runs):
             gm_prec, gm_recall = 0,0
         else:
             lr_valid_acc = score(y_valid, y_pred, average=metric_avg)
-        # print("Epoch: {}\t Test GM accuracy_score: {}".format(epoch, gm_acc ))
+        print("Epoch: {}\t Test GM accuracy_score: {}".format(epoch, gm_acc ))
 #         print("Epoch: {}\tGM accuracy_score(Valid): {}".format(epoch, gm_valid_acc))
-        # print("Epoch: {}\tTest LR accuracy_score: {}".format(epoch, lr_acc))    
+        print("Epoch: {}\tTest LR accuracy_score: {}".format(epoch, lr_acc))    
 #         print("Epoch: {}\tLR accuracy_score(Valid): {}".format(epoch, lr_valid_acc))
         wname = "Run_"+str(lo)+" LR valid score"
         wnamegm = 'Run_' + str(lo) + ' GM valid score'
@@ -473,9 +473,9 @@ for lo in range(0,num_runs):
             
 
 
-        # if len(stop_pahle) > 10 and len(stop_pahle_gm) > 10 and (all(best_score_lr_val >= k for k in stop_pahle)
-        #  and all(best_score_gm_val >= k for k in stop_pahle_gm)):
-        if  len(stop_pahle_gm) > 10 and all(best_score_gm_val >= k for k in stop_pahle_gm):
+        # if len(stop_pahle) > 20 and len(stop_pahle_gm) > 20 and (all(best_score_lr_val >= k for k in stop_pahle) and all(best_score_gm_val >= k for k in stop_pahle_gm)):
+        if len(stop_pahle) > 10 and len(stop_pahle_gm) > 10 and (all(best_score_lr_val >= k for k in stop_pahle)):
+    #    if  len(stop_pahle_gm) > 10 and all(best_score_gm_val >= k for k in stop_pahle_gm):
         
             print('Early Stopping at', best_epoch_gm, best_score_gm, best_score_lr)
             print('Validation score Early Stopping at', best_epoch_gm, best_score_lr_val, best_score_gm_val)

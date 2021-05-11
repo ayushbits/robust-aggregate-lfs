@@ -287,7 +287,7 @@ print('Final Size of d set , U set  , validation set , test set', len(d_L), len(
 
 
 # objs = []
-# with open('normal_train_processed.p', 'rb') as f:
+# with open('normal_test_processed.p', 'rb') as f:
 #     while 1:
 #         try:
 #             o = pickle.load(f)

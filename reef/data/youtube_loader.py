@@ -82,6 +82,7 @@ def split_data(X, plots, y, split_val = 0.1):
     test_ratio = split_val
     X_tr, X_te, y_tr, y_te, plots_tr, plots_te = cross_validation.train_test_split(X_train, y_train, plots_train, test_size = test_ratio, random_state=25)
 
+    print('Train ', len(y_tr), 'Valid ', len(y_te))
     return np.array(X_tr.todense()), np.array(X_te.todense()), np.array(X_test.todense()),np.array(y_tr), np.array(y_te), np.array(y_test), plots_tr, plots_te, plots_test
 
 
@@ -103,19 +104,19 @@ class DataLoader(object):
     def load_data(self, dataset, data_path='', split_val=0.1):
         plots, labels = load_youtube_dataset()
         #Featurize Plots  
-        # vectorizer = CountVectorizer(min_df=1, binary=True, stop_words='english'  decode_error='ignore', strip_accents='ascii', ngram_range=(1,2))
+#         vectorizer = CountVectorizer(min_df=1, binary=True, stop_words='english',  decode_error='ignore', strip_accents='ascii', ngram_range=(1,2))
 
         vectorizer = CountVectorizer(min_df=1, binary=True,   decode_error='ignore', ngram_range=(1,2) ,\
         tokenizer=LemmaTokenizer(),strip_accents = 'unicode', stop_words = 'english', lowercase = True)
         
-        # nlp = spacy.load("en")
+        # nlp = spacy.load("en_core_web_sm")
         # # doc = nlp(plots)
         # phrases = set()
         # for i in plots:
         #     doc = nlp(str(i))
         #     for np in doc.noun_chunks:
         #         phrases.add(np)
-        # print('length of phrases', len(phrases))
+        # print('length of phrases', phrases)
         # vectorizer = CountVectorizer(vocabulary = phrases, min_df=1, binary=True, stop_words='english' ,\
         #   decode_error='ignore', strip_accents='ascii', ngram_range=(1,2))
         
