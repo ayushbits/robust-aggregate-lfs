@@ -25,7 +25,9 @@ load = importlib.import_module(loader_file)
 
 dl = load.DataLoader()
 train_primitive_matrix, val_primitive_matrix, test_primitive_matrix, train_ground,\
-    val_ground, test_ground, _, _, _, _,_,_ = dl.load_data(dataset=dataset, split_val = 0.1)
+    val_ground, test_ground, vizer, val_idx, common_idx, _,_,_ = dl.load_data(dataset=dataset, split_val = 0.1)
+
+x = [vizer.get_feature_names()[val_idx[i]] for i in common_idx ]
 
 # val_primitive_matrix_heuristic, val_primitive_matrix, val_ground_heuristic,  val_ground= \
 #         cross_validation.train_test_split(val_primitive_matrix, val_ground, test_size = 0.5, random_state=25)
@@ -48,6 +50,7 @@ cardinality = int(sys.argv[4])
 
 # heuristics, feature_inputs = syn.generate_heuristics(model, 1)
 # print ("Total Heuristics Generated: ", np.shape(heuristics)[1])
+
 
 overall = {}
 vals=[]
@@ -312,6 +315,10 @@ print('Final Size of d set , U set  , validation set , test set', len(d_L), len(
 
 # # ### Save Training Set Labels 
 # # We save the training set labels Reef generates that we use in the next notebook to train a simple LSTM model.
+
+for i in hg.heuristic_stats().iloc[:len(idx)]['Feat 1']:
+    print(x[int(i)])
+
 filepath = './generated_data/' + dataset 
 file_name = mode + '_reef.npy'
 np.save(os.path.join(pickle_save,file_name), training_marginals[-1])
