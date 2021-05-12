@@ -52,7 +52,7 @@ else:
     metric_avg = 'macro'
 
 
-from weighted_cage import *
+from gpu_weighted_cage import *
 import higher
 import copy
 
