@@ -260,7 +260,7 @@ for lo in range(0,num_runs):
 
     dataset = TensorDataset(x_train, y_train, l, s, supervised_mask)
 
-    loader = DataLoader(dataset, batch_size=batch_size, shuffle=True,pin_memory=True)
+    loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)#,pin_memory=True)
     save_folder = sys.argv[1]
     print('num runs are ', sys.argv[1], num_runs)
     best_score_lr,best_score_gm,best_epoch_lr,best_epoch_gm,best_score_lr_val, best_score_gm_val = 0,0,0,0,0,0
