@@ -1,5 +1,5 @@
 # arguments - dataset(1) mode(random/all/normal)(2) model(dt/lr/nn)(3) cardinality(4) num_of_loops(5)
-# save directory (6) #model_for_feature_keras (lstm) (7)
+# save directory (6) #model_for_feature_keras (lstm/count/lemma) (7)
 
 
 # python generic_generate_labels.py imdb normal dt 1 26 imdb_val2.5_sup5_dt1
@@ -23,11 +23,11 @@ loader_file = "data." + dataset+"_loader"
 import importlib
 
 load = importlib.import_module(loader_file)
-
+feats = sys.argv[7]
 dl = load.DataLoader()
 train_primitive_matrix, val_primitive_matrix, test_primitive_matrix, train_ground,\
     val_ground, test_ground, vizer, val_idx, common_idx, train_text, val_text, test_text\
-     = dl.load_data(dataset=dataset, split_val = 0.1)
+     = dl.load_data(dataset=dataset, split_val = 0.1, feat = feats)
 
 x = [vizer.get_feature_names()[val_idx[i]] for i in common_idx ]
 

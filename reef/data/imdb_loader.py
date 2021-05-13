@@ -89,16 +89,19 @@ class DataLoader(object):
 
         return common_idx
 
-    def load_data(self, dataset, data_path='/home/ayusham/auto_lfs/reef/data/imdb/',split_val=0.1):
+    def load_data(self, dataset, data_path='/home/ayusham/auto_lfs/reef/data/imdb/',split_val=0.1, feat = 'count'):
         #Parse Files
         plots, labels = parse_file(data_path+'budgetandactors.txt')
         #read_plots('imdb_plots.tsv')
         print('len(labels',len(labels))
         #Featurize Plots  
-        vectorizer = CountVectorizer(min_df=1, binary=True,   decode_error='ignore', ngram_range=(1,2) ,\
+        if feat == 'count':
+            vectorizer = CountVectorizer(min_df=1, binary=True, stop_words='english', \
+                                     decode_error='ignore', strip_accents='ascii', ngram_range=(1,2))
+        elif feat == 'lemma':
+            vectorizer = CountVectorizer(min_df=1, binary=True,   decode_error='ignore', ngram_range=(1,2) ,\
         tokenizer=LemmaTokenizer(),strip_accents = 'unicode', stop_words = 'english', lowercase = True)
-#         vectorizer = CountVectorizer(min_df=1, binary=True, stop_words='english', \
-#                                      decode_error='ignore', strip_accents='ascii', ngram_range=(1,2))
+        
         X = vectorizer.fit_transform(plots)
         valid_feats = np.where(np.sum(X,0)> 2)[1]
         X = X[:,valid_feats]
