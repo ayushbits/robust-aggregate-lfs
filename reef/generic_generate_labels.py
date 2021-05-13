@@ -1,5 +1,5 @@
 # arguments - dataset(1) mode(random/all/normal)(2) model(dt/lr/nn)(3) cardinality(4) num_of_loops(5)
-# save directory (6)
+# save directory (6) #model_for_feature_keras (lstm) (7)
 
 
 # python generic_generate_labels.py imdb normal dt 1 26 imdb_val2.5_sup5_dt1
@@ -13,6 +13,7 @@ import pickle
 import os
 import warnings
 from sklearn import model_selection as cross_validation
+from lstm.DeepLSTM import *
 warnings.filterwarnings("ignore")
 
 dataset= sys.argv[1]
@@ -25,7 +26,8 @@ load = importlib.import_module(loader_file)
 
 dl = load.DataLoader()
 train_primitive_matrix, val_primitive_matrix, test_primitive_matrix, train_ground,\
-    val_ground, test_ground, vizer, val_idx, common_idx, _,_,_ = dl.load_data(dataset=dataset, split_val = 0.1)
+    val_ground, test_ground, vizer, val_idx, common_idx, train_text, val_text, test_text\
+     = dl.load_data(dataset=dataset, split_val = 0.1)
 
 x = [vizer.get_feature_names()[val_idx[i]] for i in common_idx ]
 
@@ -183,6 +185,12 @@ print('LFS are ', lx)
 file_name = mode + '_k.npy'
 np.save(os.path.join(save_path , file_name), lx)
 # exit()
+
+if sys.argv[7] == 'lstm':
+    mkt = MakeTokens()
+    train_primitive_matrix, val_primitive_matrix, test_primitive_matrix, \
+    vocab_size, embedding_vector_length, max_sentence_length =\
+    mkt.make(train_text, val_text, test_text)
 
 upto = int(len(val_ground)/2 ) # Size of d set i.e. Labelled set
 d_L, U_L = train_ground[:upto], train_ground[upto: ]

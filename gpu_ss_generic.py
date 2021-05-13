@@ -1,8 +1,11 @@
 import torch
 import sys
 import numpy as np
+#Own models
 from logistic_regression import *
 from deep_net import *
+from deep_lstm import *
+###
 import warnings
 warnings.filterwarnings("ignore")
 from gpu_cage import *
@@ -21,6 +24,8 @@ torch.backends.cudnn.benchmark = True
 torch.set_default_dtype(torch.float64)
 torch.set_printoptions(threshold=20)
 
+
+
 objs = []
 dset_directory = sys.argv[10]
 n_classes = int(sys.argv[11])
@@ -30,12 +35,26 @@ batch_size = int(sys.argv[14])
 lr_fnetwork = float(sys.argv[15])
 lr_gm = float(sys.argv[16])
 name_dset = dset_directory.split("/")[-1].lower()
-print('dset is ', name_dset)
+dataset = dset_directory.split("/")[-2].lower()
+print('dset is ', dataset, name_dset)
 mode = sys.argv[17] #''
 metric = sys.argv[18]
 conf.learning_rate = lr_fnetwork #wandb
 wrunname = name_dset + "_" + mode +"_generic"#wandb
 wandb.run.name = wrunname #wandb
+
+
+if feat_model == 'lstm':
+    print('dataset is ', dataset)
+    loader_file = "reef.data." + dataset+"_loader"
+
+    import importlib
+
+    load = importlib.import_module(loader_file)
+
+    dl = load.DataLoader()
+    train_primitive_matrix, val_primitive_matrix, test_primitive_matrix, train_ground,\
+        val_ground, test_ground, _,_,_, train_text, val_text, test_text = dl.load_data(dataset=dataset, split_val = 0.1)
 
 
 from sklearn.metrics import precision_score as prec_score
@@ -113,7 +132,7 @@ x_valid = torch.tensor(objs[0]).double()
 y_valid = objs[3]
 l_valid = torch.tensor(objs[2]).long()
 s_valid = torch.tensor(objs[2]).double()
-print('Valid shape', objs[2].shape)
+print('Valid shape', x_valid.shape)
 objs1 = []
 if mode != '':
     fname = dset_directory + "/" + mode + "_test_processed.p"
@@ -132,7 +151,7 @@ x_test = torch.tensor(objs1[0]).double()
 y_test = objs1[3]
 l_test = torch.tensor(objs1[2]).long()
 s_test = torch.tensor(objs1[2]).double()
-print('Test shape', objs1[2].shape)
+print('Test shape', x_test.shape)
 
 n_features = x_supervised.shape[1]
 
@@ -241,22 +260,33 @@ for lo in range(0,num_runs):
     pi_y.requires_grad = True
 
     if feat_model == 'lr':
-        lr_model = LogisticRegression(n_features, n_classes).to(device=device)
+        lr_model = LogisticReg(n_features, n_classes).to(device=device)
+        # print(lr_model)
+        supervised_criterion = torch.nn.CrossEntropyLoss()
     elif feat_model =='nn':
         n_hidden = 512
         lr_model = DeepNet(n_features, n_hidden, n_classes).to(device=device)
+        supervised_criterion = torch.nn.CrossEntropyLoss()
+    elif feat_model == 'lstm':
+        mkt = MakeTokens()
+        _,_,_, vocab_size, embedding_vector_length, max_sentence_length =\
+         mkt.make(train_text, val_text, test_text)
+        print('vocab size is ', vocab_size)
+        lr_model = DeepLSTM(vocab_size=vocab_size, embedding_vector_length=32, max_sentence_length=500).to(device=device)
+        supervised_criterion = torch.nn.BCELoss()
     else:
         print('Please provide feature based model : lr or nn')
         exit()
 
 
-    optimizer = torch.optim.Adam([{"params": lr_model.parameters()}, {"params": [pi, pi_y, theta]}], lr=0.001)
+    # optimizer = torch.optim.Adam([{"params": lr_model.parameters()}, {"params": [pi, pi_y, theta]}], lr=0.001)
     optimizer_lr = torch.optim.Adam(lr_model.parameters(), lr=lr_fnetwork)
     optimizer_gm = torch.optim.Adam([theta, pi, pi_y], lr=lr_gm, weight_decay=0)
     # optimizer = torch.optim.Adam([theta, pi, pi_y], lr=0.01, weight_decay=0)
-    supervised_criterion = torch.nn.CrossEntropyLoss()
+    
 
 
+    # print('X_train', X_train.shape)
 
     dataset = TensorDataset(x_train, y_train, l, s, supervised_mask)
 
@@ -272,11 +302,11 @@ for lo in range(0,num_runs):
         lr_model.train()
 
         for batch_ndx, sample in enumerate(loader):
-            for i in range(len(sample)):
-                sample[i] = sample[i].to(device=device)
+            
             optimizer_lr.zero_grad()
             optimizer_gm.zero_grad()
-
+            for i in range(len(sample)):
+                sample[i] = sample[i].to(device=device)
             unsup = []
             sup = []
             supervised_indices = sample[4].nonzero().view(-1)
@@ -284,18 +314,27 @@ for lo in range(0,num_runs):
             unsupervised_indices = (1-sample[4]).nonzero().squeeze().view(-1)
             # print('sample[2][unsupervised_indices].shape', sample[2][unsupervised_indices].shape)
             # print('sample[3][unsupervised_indices].shape', sample[3][unsupervised_indices].shape)
-
+            # if feat_model != 'lstm':
+            #     sample[0] = sample[0].double()
+            #     sample[1] = sample[1].long()
+            # print(sample[0][supervised_indices].shape, sample[1][supervised_indices].shape)
 
             if(sys.argv[2] =='l1'):
                 if len(supervised_indices) > 0:
-                    loss_1 = supervised_criterion(lr_model(sample[0][supervised_indices]), sample[1][supervised_indices])
+                    if feat_model == 'lstm':
+                        loss_1 = supervised_criterion(lr_model(sample[0][supervised_indices].long()), sample[1][supervised_indices].double())
+                    else:
+                        loss_1 = supervised_criterion(lr_model(sample[0][supervised_indices]), sample[1][supervised_indices])
                 else:
                     loss_1 = 0
             else:
                 loss_1=0
-
+            # print('loss 1', loss_1.item())
             if(sys.argv[3] =='l2'):
-                unsupervised_lr_probability = torch.nn.Softmax()(lr_model(sample[0][unsupervised_indices]))
+                if feat_model == 'lstm':
+                    unsupervised_lr_probability = torch.nn.Softmax()(lr_model(sample[0][unsupervised_indices].long()))
+                else:
+                    unsupervised_lr_probability = torch.nn.Softmax()(lr_model(sample[0][unsupervised_indices]))
                 loss_2 = entropy(unsupervised_lr_probability)
             else:
                 loss_2=0
@@ -304,7 +343,10 @@ for lo in range(0,num_runs):
                 y_pred_unsupervised = np.argmax(probability(theta, pi_y, pi, sample[2][unsupervised_indices],\
                  sample[3][unsupervised_indices], k, n_classes,continuous_mask , device=device).cpu().detach().numpy(), 1)
                 y_pred_unsupervised =torch.tensor(y_pred_unsupervised, device=device)
-                loss_3 = supervised_criterion(lr_model(sample[0][unsupervised_indices]), torch.tensor(y_pred_unsupervised))
+                if feat_model =='lstm':
+                    loss_3 = supervised_criterion(lr_model(sample[0][unsupervised_indices].long()), torch.tensor(y_pred_unsupervised))
+                else:
+                    loss_3 = supervised_criterion(lr_model(sample[0][unsupervised_indices]), torch.tensor(y_pred_unsupervised))
             else:
                 loss_3 = 0
 
@@ -327,7 +369,10 @@ for lo in range(0,num_runs):
                     probs_graphical = probability(theta, pi_y, pi,sample[2][unsupervised_indices],sample[3][unsupervised_indices],\
                          k, n_classes, continuous_mask, device=device)
                 probs_graphical = (probs_graphical.t() / probs_graphical.sum(1)).t()
-                probs_lr = torch.nn.Softmax()(lr_model(sample[0]))
+                if feat_model == 'lstm':
+                    probs_lr = lr_model(sample[0].long())
+                else:
+                    probs_lr = torch.nn.Softmax()(lr_model(sample[0]))
                 loss_6 = kl_divergence(probs_lr, probs_graphical)
                 # loss_6 = kl_divergence(probs_graphical, probs_lr) #original version
 
@@ -367,9 +412,14 @@ for lo in range(0,num_runs):
             gm_valid_acc = score(y_valid, y_pred, average=metric_avg)
 
         #LR Test
-
-        probs = torch.nn.Softmax()(lr_model(x_test.to(device=device)))
-        y_pred = np.argmax(probs.cpu().detach().numpy(), 1)
+        if feat_model =='lstm':
+            probs = lr_model(x_test.long().to(device=device))
+            y_pred = probs.cpu().detach().numpy()
+            y_pred = np.round(y_pred)
+        else:
+            # x_test = x_test.double()
+            probs = torch.nn.Softmax()(lr_model(x_test.to(device=device)))
+            y_pred = np.argmax(probs.cpu().detach().numpy(), 1)
         # if name_dset =='youtube' or name_dset=='census' or name_dset =='sms':
         if metric=='accuracy':
         	# print('inside accuracy LR test')
@@ -378,14 +428,21 @@ for lo in range(0,num_runs):
         	lr_recall = recall_score(y_test, y_pred, average=None)
         	gm_prec, gm_recall = 0,0
 
-    
         else:
             lr_acc =score(y_test, y_pred, average=metric_avg)
             lr_prec = prec_score(y_test, y_pred, average=metric_avg)
             lr_recall = recall_score(y_test, y_pred, average=metric_avg)
         #LR Valid
-        probs = torch.nn.Softmax()(lr_model(x_valid.to(device=device)))
-        y_pred = np.argmax(probs.cpu().detach().numpy(), 1)
+
+        if feat_model =='lstm':
+            probs = lr_model(x_valid.long().to(device=device))
+            y_pred = probs.cpu().detach().numpy()
+            y_pred = np.round(y_pred)
+        else:
+            x_valid = x_valid.double()
+            probs = torch.nn.Softmax()(lr_model(x_valid.to(device=device)))
+            y_pred = np.argmax(probs.cpu().detach().numpy(), 1)
+            
         
         if metric=='accuracy':
             lr_valid_acc = score(y_valid, y_pred)

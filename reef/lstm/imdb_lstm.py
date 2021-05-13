@@ -67,5 +67,6 @@ def lstm_simple(train_text, y_train, test_text, y_test, bs=64, n=3, dataset='imd
 
         else:
             y_pred = model.predict(X_test, batch_size=1)
+            print("y_pred is", y_pred)
             y_pred = np.array([x[0] for x in y_pred])
     return y_pred

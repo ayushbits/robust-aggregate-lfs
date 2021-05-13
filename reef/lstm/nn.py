@@ -65,7 +65,7 @@ def lstm_simple(train_text, y_train, test_text, y_test, bs=64, n=3, dataset='imd
         model = DeepNet(768, 512, 2) #n_features, n_hidden, n_classes
         optimizer_lr = torch.optim.Adam(model.parameters(), lr= 0.0003)
         # print(model.summary())
-        supervised_criterion = torch.nn.CrossEntropLoss()
+        supervised_criterion = torch.nn.CrossEntropyLoss()
         for i in range(n):
             model.train()
             # loss = 0
