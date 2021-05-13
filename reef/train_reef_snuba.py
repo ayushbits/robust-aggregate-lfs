@@ -74,7 +74,8 @@ def get_features(text):
 # # X_test = test_text
 
 mkt = MakeTokens()
-X_train, X_test, vocab_size, embedding_vector_length, max_sentence_length = mkt.make(train_text, test_text)
+X_train, X_val, X_test, vocab_size, embedding_vector_length, max_sentence_length =\
+ mkt.make(train_text, val_text, test_text)
 print("X_train shape ", X_train.shape)
 
 f1_all = []
@@ -85,21 +86,21 @@ test_acc_all = []
 
 # bs_arr = [64]#,128,256]
 bs = 64
-n_epochs_arr = [5]#,10,25]
+epochs = 15
 train_ground[train_ground == -1] =0
 test_ground[test_ground == -1] = 0
 print('vocab_size, embedding_vector_length, max_sentence_length',vocab_size, embedding_vector_length, max_sentence_length)
-for n in n_epochs_arr:
-    y_pred = lstm_simple(X_train, train_ground,	X_test, test_ground, vocab_size, embedding_vector_length, max_sentence_length)
+# for n in range(epo:
+y_pred = lstm_simple(X_train, train_ground,	X_test, test_ground, vocab_size, embedding_vector_length, max_sentence_length, bs, epochs)
 
-    predictions = np.round(y_pred)
-    
-    test_acc_all.append(np.sum(predictions == test_ground)/float(np.shape(test_ground)[0]))
-    f1 = f1_score(test_ground, predictions, average='macro')
+predictions = np.round(y_pred)
 
-    f1_all.append(f1)
-    pr_all.append(precision_score(test_ground, predictions))
-    re_all.append(recall_score(test_ground, predictions))
-        # if n == n_epochs_arr[0] -1:
+test_acc_all.append(np.sum(predictions == test_ground)/float(np.shape(test_ground)[0]))
+f1 = f1_score(test_ground, predictions, average='macro')
+
+f1_all.append(f1)
+pr_all.append(precision_score(test_ground, predictions))
+re_all.append(recall_score(test_ground, predictions))
+    # if n == n_epochs_arr[0] -1:
 print('Accuracy ',test_acc_all, 'F1 score', f1_all, 'Precision', pr_all, 'Recall',re_all)
 

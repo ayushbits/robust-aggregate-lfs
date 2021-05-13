@@ -57,22 +57,22 @@ class DeepLSTM(nn.Module):
     def get_embedding(self, x):
     	return self.emb(x).view(-1, self.max_sentence_length*self.embedding_vector_length)
 
-def lstm_simple(X_train, y_train, X_test, y_test, vocab_size, embedding_vector_length, max_sentence_length):
+def lstm_simple(X_train, y_train, X_test, y_test, vocab_size, embedding_vector_length, max_sentence_length, bs, epochs):
 
 	
 	X_train  = torch.tensor(X_train).long()
 	X_test  = torch.tensor(X_test).long()
 	y_train  = torch.tensor(y_train).float()
 	# print(y_train)
-	bs = 64
+	bs = bs
 	dataset = TensorDataset(X_train, y_train)
 	loader = DataLoader(dataset, batch_size=bs, shuffle=True)
 	model = DeepLSTM(vocab_size, embedding_vector_length, max_sentence_length) #n_features, n_hidden, n_classes
 	optimizer_lr = torch.optim.Adam(model.parameters(), lr= 0.003)
 	# print(model.summary())
 	supervised_criterion = torch.nn.BCELoss()
-	epochs = 25
-	for i in range(epochs):
+	epochs = epochs
+	for i in tqdm(range(epochs)):
 	    model.train()
 	    # loss = 0
 	    for batch_ndx, sample in enumerate(loader):
