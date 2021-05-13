@@ -417,7 +417,7 @@ for lo in range(0,num_runs):
     pi_y.requires_grad = True
 
     if feat_model == 'lr':
-        lr_model = LogisticRegression(n_features, n_classes).to(device=device)
+        lr_model = LogisticReg(n_features, n_classes).to(device=device)
     elif feat_model =='nn':
         n_hidden = 512
         lr_model = DeepNet(n_features, n_hidden, n_classes).to(device=device)
@@ -453,7 +453,7 @@ for lo in range(0,num_runs):
             for i in range(len(sample)):
                 sample[i] = sample[i].to(device=device)
             if feat_model == 'lr':
-                lr_model1 = LogisticRegression(n_features, n_classes).to(device=device)
+                lr_model1 = LogisticReg(n_features, n_classes).to(device=device)
             elif feat_model =='nn':
                 n_hidden = 512
                 lr_model1 = DeepNet(n_features, n_hidden, n_classes).to(device=device)
@@ -537,15 +537,16 @@ for lo in range(0,num_runs):
                 optimizer_lr.step()
         wname = "Run_"+str(lo)+" Train Loss" #wandb
         wandb.log({wname:loss, 'custom_step':epoch}) #wandb
-        y_pred = np.argmax(probability(theta, pi_y, pi, l_test.to(device), s_test.to(device), k, n_classes, continuous_mask, weights, device=device).cpu().detach().numpy(), 1)
+        if epoch %5 ==0:
+            y_pred = np.argmax(probability(theta, pi_y, pi, l_test.to(device), s_test.to(device), k, n_classes, continuous_mask, weights, device=device).cpu().detach().numpy(), 1)
 
-        if metric=='accuracy':
-            lr_prec,lr_recall,gm_prec,gm_recall = 0,0,0,0
-            gm_acc = score(y_test, y_pred)
-        else:
-            gm_acc = score(y_test, y_pred, average=metric_avg)
-            gm_prec = prec_score(y_test, y_pred, average=metric_avg)
-            gm_recall = recall_score(y_test, y_pred, average=metric_avg)
+            if metric=='accuracy':
+                lr_prec,lr_recall,gm_prec,gm_recall = 0,0,0,0
+                gm_acc = score(y_test, y_pred)
+            else:
+                gm_acc = score(y_test, y_pred, average=metric_avg)
+                gm_prec = prec_score(y_test, y_pred, average=metric_avg)
+                gm_recall = recall_score(y_test, y_pred, average=metric_avg)
 
         #Valid
         y_pred = np.argmax(probability(theta, pi_y, pi, l_valid.to(device), s_valid.to(device), k, n_classes, continuous_mask, weights, device=device).cpu().detach().numpy(), 1)
@@ -557,19 +558,19 @@ for lo in range(0,num_runs):
             gm_valid_acc = score(y_valid, y_pred, average="macro")
 
         #LR Test
+        if epoch %5 ==0:
+            probs = torch.nn.Softmax()(lr_model(x_test.to(device)))
+            y_pred = np.argmax(probs.cpu().detach().numpy(), 1)
+            # lr_acc =score(y_test, y_pred, average="macro")
+            # if name_dset =='youtube' or name_dset=='census' or name_dset =='sms':
+            if metric=='accuracy':
+                lr_prec,lr_recall,gm_prec,gm_recall = 0,0,0,0
+                lr_acc =score(y_test, y_pred)
 
-        probs = torch.nn.Softmax()(lr_model(x_test.to(device)))
-        y_pred = np.argmax(probs.cpu().detach().numpy(), 1)
-        # lr_acc =score(y_test, y_pred, average="macro")
-        # if name_dset =='youtube' or name_dset=='census' or name_dset =='sms':
-        if metric=='accuracy':
-            lr_prec,lr_recall,gm_prec,gm_recall = 0,0,0,0
-            lr_acc =score(y_test, y_pred)
-
-        else:
-            lr_acc =score(y_test, y_pred, average=metric_avg)
-            lr_prec = prec_score(y_test, y_pred, average=metric_avg)
-            lr_recall = recall_score(y_test, y_pred, average=metric_avg)
+            else:
+                lr_acc =score(y_test, y_pred, average=metric_avg)
+                lr_prec = prec_score(y_test, y_pred, average=metric_avg)
+                lr_recall = recall_score(y_test, y_pred, average=metric_avg)
         #LR Valid
         probs = torch.nn.Softmax()(lr_model(x_valid.to(device)))
         y_pred = np.argmax(probs.cpu().detach().numpy(), 1)
@@ -581,9 +582,10 @@ for lo in range(0,num_runs):
             lr_valid_acc =score(y_valid, y_pred, average=metric_avg)
 
         # lr_valid_acc = score(y_valid, y_pred, average="macro")
-        # print("Epoch: {}\t Test GM accuracy_score: {}".format(epoch, gm_acc ))
-#        print("Epoch: {}\tGM accuracy_score(Valid): {}".format(epoch, gm_valid_acc))
-        # print("Epoch: {}\tTest LR accuracy_score: {}".format(epoch, lr_acc ))
+        if epoch %5 ==0:
+            print("Epoch: {}\t Test GM accuracy_score: {}".format(epoch, gm_acc ))
+    #        print("Epoch: {}\tGM accuracy_score(Valid): {}".format(epoch, gm_valid_acc))
+            print("Epoch: {}\tTest LR accuracy_score: {}".format(epoch, lr_acc ))
  #       print("Epoch: {}\tLR accuracy_score(Valid): {}".format(epoch, lr_valid_acc))
         wname = "Run_"+str(lo)+" LR valid score"
         wnamegm = 'Run_' + str(lo) + ' GM valid score'

@@ -13,9 +13,9 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from losses import *
 import pickle
 from torch.utils.data import TensorDataset, DataLoader
-import wandb
-wandb.init(project='generic', entity='spear-plus')
-conf = wandb.config
+# import wandb
+# wandb.init(project='generic', entity='spear-plus')
+# conf = wandb.config
 # CUDA for PyTorch
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda:0" if use_cuda else "cpu")
@@ -39,9 +39,9 @@ dataset = dset_directory.split("/")[-2].lower()
 print('dset is ', dataset, name_dset)
 mode = sys.argv[17] #''
 metric = sys.argv[18]
-conf.learning_rate = lr_fnetwork #wandb
-wrunname = name_dset + "_" + mode +"_generic"#wandb
-wandb.run.name = wrunname #wandb
+# conf.learning_rate = lr_fnetwork #wandb
+# wrunname = name_dset + "_" + mode +"_generic"#wandb
+# wandb.run.name = wrunname #wandb
 
 
 if feat_model == 'lstm':
@@ -386,22 +386,24 @@ for lo in range(0,num_runs):
 
             loss = loss_1 + loss_2 + loss_3 + loss_4 + loss_6+loss_5 + prec_loss
 #            print('loss is',loss_1, loss_2, loss_3, loss_4, loss_5, loss_6, prec_loss)
+            # print('loss ', loss)
             if loss != 0:
                 loss.backward()
                 optimizer_gm.step()
                 optimizer_lr.step()
-        wname = "Run_"+str(lo)+" Train Loss" #wandb
-        wandb.log({wname:loss, 'custom_step':epoch}) #wandb
-        y_pred = np.argmax(probability(theta, pi_y, pi, l_test.to(device=device), s_test.to(device=device), k, n_classes, continuous_mask, device=device).cpu().detach().numpy(), 1)
-        if metric=='accuracy':
-            gm_acc = score(y_test, y_pred)
-            lr_prec = prec_score(y_test, y_pred, average=None) 
-            lr_recall = recall_score(y_test, y_pred, average=None)
-            gm_prec, gm_recall = 0,0
-        else:
-            gm_acc = score(y_test, y_pred, average=metric_avg)
-            gm_prec = prec_score(y_test, y_pred, average=metric_avg)
-            gm_recall = recall_score(y_test, y_pred, average=metric_avg)
+        # wname = "Run_"+str(lo)+" Train Loss" #wandb
+        # wandb.log({wname:loss, 'custom_step':epoch}) #wandb
+        if epoch %5==0:
+            y_pred = np.argmax(probability(theta, pi_y, pi, l_test.to(device=device), s_test.to(device=device), k, n_classes, continuous_mask, device=device).cpu().detach().numpy(), 1)
+            if metric=='accuracy':
+                gm_acc = score(y_test, y_pred)
+                lr_prec = prec_score(y_test, y_pred, average=None) 
+                lr_recall = recall_score(y_test, y_pred, average=None)
+                gm_prec, gm_recall = 0,0
+            else:
+                gm_acc = score(y_test, y_pred, average=metric_avg)
+                gm_prec = prec_score(y_test, y_pred, average=metric_avg)
+                gm_recall = recall_score(y_test, y_pred, average=metric_avg)
         #Valid
         y_pred = np.argmax(probability(theta, pi_y, pi, l_valid.to(device=device), s_valid.to(device=device), k, n_classes, continuous_mask, device=device).cpu().detach().numpy(), 1)
         
@@ -412,27 +414,28 @@ for lo in range(0,num_runs):
             gm_valid_acc = score(y_valid, y_pred, average=metric_avg)
 
         #LR Test
-        if feat_model =='lstm':
-            probs = lr_model(x_test.long().to(device=device))
-            y_pred = probs.cpu().detach().numpy()
-            y_pred = np.round(y_pred)
-        else:
-            # x_test = x_test.double()
-            probs = torch.nn.Softmax()(lr_model(x_test.to(device=device)))
-            y_pred = np.argmax(probs.cpu().detach().numpy(), 1)
-        # if name_dset =='youtube' or name_dset=='census' or name_dset =='sms':
-        if metric=='accuracy':
-        	# print('inside accuracy LR test')
-        	lr_acc =score(y_test, y_pred)
-        	lr_prec = prec_score(y_test, y_pred, average=None)
-        	lr_recall = recall_score(y_test, y_pred, average=None)
-        	gm_prec, gm_recall = 0,0
+        if epoch %5==0:
+            if feat_model =='lstm':
+                probs = lr_model(x_test.long().to(device=device))
+                y_pred = probs.cpu().detach().numpy()
+                y_pred = np.round(y_pred)
+            else:
+                # x_test = x_test.double()
+                probs = torch.nn.Softmax()(lr_model(x_test.to(device=device)))
+                y_pred = np.argmax(probs.cpu().detach().numpy(), 1)
+            # if name_dset =='youtube' or name_dset=='census' or name_dset =='sms':
+            if metric=='accuracy':
+            	# print('inside accuracy LR test')
+            	lr_acc =score(y_test, y_pred)
+            	lr_prec = prec_score(y_test, y_pred, average=None)
+            	lr_recall = recall_score(y_test, y_pred, average=None)
+            	gm_prec, gm_recall = 0,0
 
-        else:
-            lr_acc =score(y_test, y_pred, average=metric_avg)
-            lr_prec = prec_score(y_test, y_pred, average=metric_avg)
-            lr_recall = recall_score(y_test, y_pred, average=metric_avg)
-        #LR Valid
+            else:
+                lr_acc =score(y_test, y_pred, average=metric_avg)
+                lr_prec = prec_score(y_test, y_pred, average=metric_avg)
+                lr_recall = recall_score(y_test, y_pred, average=metric_avg)
+            #LR Valid
 
         if feat_model =='lstm':
             probs = lr_model(x_valid.long().to(device=device))
@@ -449,16 +452,17 @@ for lo in range(0,num_runs):
             gm_prec, gm_recall = 0,0
         else:
             lr_valid_acc = score(y_valid, y_pred, average=metric_avg)
-        print("Epoch: {}\t Test GM accuracy_score: {}".format(epoch, gm_acc ))
-#         print("Epoch: {}\tGM accuracy_score(Valid): {}".format(epoch, gm_valid_acc))
-        print("Epoch: {}\tTest LR accuracy_score: {}".format(epoch, lr_acc))    
-#         print("Epoch: {}\tLR accuracy_score(Valid): {}".format(epoch, lr_valid_acc))
+        if epoch %5 ==0:
+            print("Epoch: {}\t Test GM accuracy_score: {}".format(epoch, gm_acc ))
+    #         print("Epoch: {}\tGM accuracy_score(Valid): {}".format(epoch, gm_valid_acc))
+            print("Epoch: {}\tTest LR accuracy_score: {}".format(epoch, lr_acc))    
+    #         print("Epoch: {}\tLR accuracy_score(Valid): {}".format(epoch, lr_valid_acc))
         wname = "Run_"+str(lo)+" LR valid score"
         wnamegm = 'Run_' + str(lo) + ' GM valid score'
-        wandb.log({wname:lr_valid_acc, 
-            wnamegm:gm_valid_acc,'custom_step':epoch})
+        # wandb.log({wname:lr_valid_acc, 
+            # wnamegm:gm_valid_acc,'custom_step':epoch})
 
-        if epoch > 1 and gm_valid_acc >= best_score_gm_val and gm_valid_acc >= best_score_lr_val:
+        if epoch > 5 and gm_valid_acc >= best_score_gm_val and gm_valid_acc >= best_score_lr_val:
             # print("Inside Best hu Epoch: {}\t Test GM accuracy_score: {}".format(epoch, gm_acc ))
             # print("Inside Best hu Epoch: {}\tGM accuracy_score(Valid): {}".format(epoch, gm_valid_acc))
             if gm_valid_acc == best_score_gm_val or gm_valid_acc == best_score_lr_val:
@@ -496,7 +500,7 @@ for lo in range(0,num_runs):
             # torch.save(checkpoint, save_folder+"/lr_"+ str(epoch)+".pt")
             
 
-        if epoch > 1 and lr_valid_acc >= best_score_lr_val and lr_valid_acc >= best_score_gm_val:
+        if epoch > 5 and lr_valid_acc >= best_score_lr_val and lr_valid_acc >= best_score_gm_val:
             # print("Inside Best hu Epoch: {}\tTest LR accuracy_score: {}".format(epoch, lr_acc ))
             # print("Inside Best hu Epoch: {}\tLR accuracy_score(Valid): {}".format(epoch, lr_valid_acc))
             if lr_valid_acc == best_score_lr_val or lr_valid_acc == best_score_gm_val:
@@ -581,6 +585,6 @@ print("VALIDATION Averaged scores are for GM,LR", np.mean(final_score_gm_val), n
 print("TEST STD  are for GM,LR", np.std(final_score_gm), np.std(final_score_lr))
 print("VALIDATION STD  are for GM,LR", np.std(final_score_gm_val), np.std(final_score_lr_val))
 
-wandb.log({'test_lr':np.mean(final_score_lr),'test_gm':np.mean(final_score_gm)})#wandb
-wandb.log({'test_mean_GM ':np.mean(final_score_lr), 'test_mean_GM': np.mean(final_score_gm)}) #wandb
-wandb.log({'test_STD_LR ':np.std(final_score_lr), 'test_STD_GM': np.std(final_score_gm)}) #wandb
+# wandb.log({'test_lr':np.mean(final_score_lr),'test_gm':np.mean(final_score_gm)})#wandb
+# wandb.log({'test_mean_GM ':np.mean(final_score_lr), 'test_mean_GM': np.mean(final_score_gm)}) #wandb
+# wandb.log({'test_STD_LR ':np.std(final_score_lr), 'test_STD_GM': np.std(final_score_gm)}) #wandb

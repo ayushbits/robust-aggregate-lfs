@@ -1,7 +1,7 @@
 #python train_reef_snuba.py imdb normal val_5_dict_dt1
 import numpy as np
 import pandas as pd
-from sklearn.metrics import precision_score, recall_score, f1_score
+from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 import torch
 from transformers import DistilBertConfig, DistilBertModel, DistilBertTokenizer
 # from lstm.imdb_lstm import *
@@ -95,7 +95,8 @@ y_pred = lstm_simple(X_train, train_ground,	X_test, test_ground, vocab_size, emb
 
 predictions = np.round(y_pred)
 
-test_acc_all.append(np.sum(predictions == test_ground)/float(np.shape(test_ground)[0]))
+test_acc_all = np.sum(predictions == test_ground)/float(np.shape(test_ground)[0])
+acc = accuracy_score(test_ground, predictions)
 f1 = f1_score(test_ground, predictions, average='macro')
 
 f1_all.append(f1)

@@ -6,7 +6,7 @@ from keras.preprocessing.text import Tokenizer
 from sklearn.linear_model import LogisticRegression
 import torch
 from torch.utils.data import TensorDataset, DataLoader        
-
+from tqdm import tqdm
 import numpy as np
 
 class MakeTokens():
