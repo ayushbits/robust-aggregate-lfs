@@ -22,7 +22,7 @@ class LemmaTokenizer(object):
 
 def load_youtube_dataset(load_train_labels: bool = False, split_dev: bool = True):
 
-    filenames = sorted(glob.glob("/home/ayusham/auto_lfs/reef/data/youtube/Youtube*.csv"))
+    filenames = sorted(glob.glob("~/auto_lfs/reef/data/youtube/Youtube*.csv"))
 
     dfs = []
     for i, filename in enumerate(filenames, start=1):

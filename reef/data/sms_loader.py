@@ -84,7 +84,7 @@ class DataLoader(object):
 
         return common_idx
 
-    def load_data(self, dataset, data_path='/home/ayusham/auto_lfs/reef/data/sms/', split_val=0.1, feat= 'count'):
+    def load_data(self, dataset, data_path='~/auto_lfs/reef/data/sms/', split_val=0.1, feat= 'count'):
      
         plots, labels = parse_file(data_path+'all.csv')
         same = len(np.where(labels==1)[0])

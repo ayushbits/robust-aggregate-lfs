@@ -109,7 +109,7 @@ class DataLoader(object):
 
         return common_idx
 
-    def load_data(self, dataset, data_path='/home/ayusham/auto_lfs/reef/data/sst5/',split_val=0.1):
+    def load_data(self, dataset, data_path='~/auto_lfs/reef/data/sst5/',split_val=0.1):
      
         plots, labels = parse_file(data_path+'all.txt')
 

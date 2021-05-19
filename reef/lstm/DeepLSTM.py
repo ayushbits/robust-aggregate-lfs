@@ -1,92 +1,78 @@
-import torch.nn as nn
-import torch.nn.functional as F
+import numpy as np
+from keras.models import Sequential
+from keras.layers import Dense, LSTM
 from keras.layers.embeddings import Embedding
 from keras.preprocessing import sequence
 from keras.preprocessing.text import Tokenizer
 from sklearn.linear_model import LogisticRegression
-import torch
-from torch.utils.data import TensorDataset, DataLoader        
-from tqdm import tqdm
-import numpy as np
+#top_words=5000
 
-class MakeTokens():
-	def __init__(self):
-		self.max_sentence_length = 500
-		self.embedding_vector_length = 32
+def lstm_simple(train_text, y_train, test_text, y_test, bs=64, n=3, dataset='imdb'):
+    #Label Processing
+    y_train[y_train == -1] = 0
+    y_test[y_test == -1] = 0
+#     if dataset =='trec':
+#         y_train *= 1
+#     if dataset != 'audit':
+        #Make Tokenizer
+#         tokenizer = Tokenizer()
+#         tokenizer.fit_on_texts(train_text)
+#         tokenizer.fit_on_texts(test_text)
+#         X_train = tokenizer.texts_to_sequences(train_text)
+#         X_test = tokenizer.texts_to_sequences(test_text)
+        # print('audit')
 
-	def make(self,train_text, val_text, test_text):
-	    tokenizer = Tokenizer()
-	    tokenizer.fit_on_texts(train_text)
-	    tokenizer.fit_on_texts(val_text)
-	    tokenizer.fit_on_texts(test_text)
-	    X_train = tokenizer.texts_to_sequences(train_text)
-	    X_val = tokenizer.texts_to_sequences(val_text)
-	    X_test = tokenizer.texts_to_sequences(test_text)
+    #Make embedding 
+    if dataset == 'audit':
+        print(y_train)
+        y_train[y_train>=0.5] =1
+        y_train[y_train<0.5] =0
+        print('train_text.shape', y_train)
+        model = LogisticRegression(random_state=25).fit(train_text, y_train)
+        scores = model.predict(train_text)
+        X_test = test_text
+        y_pred = model.predict(X_test)
 
-	    X_train = sequence.pad_sequences(X_train, maxlen=self.max_sentence_length)
-	    X_val = sequence.pad_sequences(X_val, maxlen=self.max_sentence_length)
-	    X_test = sequence.pad_sequences(X_test, maxlen=self.max_sentence_length)
-	    vocab_size=len(tokenizer.word_index) + 1
-	    return X_train, X_val, X_test, vocab_size, self.embedding_vector_length, self.max_sentence_length
+    else:
 
-
-
-class DeepLSTM(nn.Module):
-    def __init__(self, vocab_size, embedding_vector_length, max_sentence_length, num_classes=1):
-        super(DeepLSTM, self).__init__()
-        self.hidden_size = 100
-        self.embedding_vector_length = embedding_vector_length
-        self.max_sentence_length = max_sentence_length
-        self.emb = nn.Embedding(vocab_size, embedding_dim = self.embedding_vector_length)
-        self.lstm1 = nn.LSTM(input_size = embedding_vector_length, hidden_size = self.hidden_size, batch_first=True)
-        self.out = nn.Linear(self.hidden_size, num_classes)
-        self.sig = nn.Sigmoid()
-
-    def forward(self, x):
-        emb = self.emb(x)
-        # print('emb.shape', emb.shape)
-        # x = emb.trans	pose(0,1)
-        x,_ = self.lstm1(emb)
-        x = x[:,-1,:]
-        # print('x.shape', x.shape)
-        # x = x.view(-1, 50000)
-        x = self.out(x)
-        x = self.sig(x)
-        return x
-
-    def get_embedding(self, x):
-    	return self.emb(x).view(-1, self.max_sentence_length*self.embedding_vector_length)
-
-def lstm_simple(X_train, y_train, X_test, y_test, vocab_size, embedding_vector_length, max_sentence_length, bs, epochs):
-
-	
-	X_train  = torch.tensor(X_train).long()
-	X_test  = torch.tensor(X_test).long()
-	y_train  = torch.tensor(y_train).float()
-	# print(y_train)
-	bs = bs
-	dataset = TensorDataset(X_train, y_train)
-	loader = DataLoader(dataset, batch_size=bs, shuffle=True)
-	model = DeepLSTM(vocab_size, embedding_vector_length, max_sentence_length) #n_features, n_hidden, n_classes
-	optimizer_lr = torch.optim.Adam(model.parameters(), lr= 0.003)
-	# print(model.summary())
-	supervised_criterion = torch.nn.BCELoss()
-	epochs = epochs
-	for i in tqdm(range(epochs)):
-	    model.train()
-	    # loss = 0
-	    for batch_ndx, sample in enumerate(loader):
-	        loss = supervised_criterion(model(sample[0]), sample[1])
-	        loss.backward()
-	        optimizer_lr.step()
-	    print('Loss ', loss)
+        max_sentence_length= 768
+        X_train = train_text#sequence.pad_sequences(X_train, maxlen=max_sentence_length)
+        X_test = test_text#sequence.pad_sequences(X_test, maxlen=max_sentence_length)
+        embedding_vector_length = 768 #32
+        vocab_size=768 #len(tokenizer.word_index) + 1
+        print('before ',  X_train.shape)
+        X_train = X_train.reshape(-1, 768, 1)
+        X_test = X_test.reshape(-1, 768, 1)
+        print('after',  X_train.shape)
 
 
-	probs = model(X_test)
-	y_pred = probs.cpu().detach().numpy() #np.argmax(probs.cpu().detach().numpy(), 1)
-	    
+        #Model Architecture
+        model = Sequential()
+#         emb = Embedding(vocab_size, embedding_vector_length, input_length=max_sentence_length)
+#         emb.trainable = False
+#         model.add(emb)
+        model.add(LSTM(100))
+        if dataset=='trec':
+            model.add(Dense(6, activation="softmax"))
+            model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+        else:
+            model.add(Dense(1, activation="sigmoid"))
+            #Run the model!
+            model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+#         print(model.summary())
+        # print(X_train.shape, y_train.shape)
+        model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=n, batch_size=bs)
+        print(model.summary())
+        if dataset != 'trec':
+            scores = model.evaluate(X_test, y_test, verbose=0)
+            print("Accuracy: %.2f%%" % (scores[1]*100))
 
-	# model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=n, batch_size=bs)
+        #y_pred = model.predict(X_test, batch_size=1)
+        if dataset == 'trec':
+            y_pred = model.predict(X_test)
+            y_pred = np.argmax(y_pred, axis=1)
 
-
-	return y_pred
+        else:
+            y_pred = model.predict(X_test, batch_size=1)
+            y_pred = np.array([x[0] for x in y_pred])
+    return y_pred
