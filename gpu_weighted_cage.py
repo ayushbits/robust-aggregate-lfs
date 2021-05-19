@@ -94,4 +94,3 @@ def precision_loss(theta, k, n_classes, a, weights, device):
     #     correct_prob[i] = prob[i, k[i]]
     # loss = a * torch.log(correct_prob).double() + (1 - a) * torch.log(1 - correct_prob).double()
     # return -loss.sum()
-

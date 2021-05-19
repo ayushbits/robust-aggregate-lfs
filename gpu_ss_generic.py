@@ -4,7 +4,7 @@ import numpy as np
 #Own models
 from logistic_regression import *
 from deep_net import *
-from deep_lstm import *
+#from deep_lstm import *
 ###
 import warnings
 warnings.filterwarnings("ignore")
@@ -18,7 +18,7 @@ from torch.utils.data import TensorDataset, DataLoader
 # conf = wandb.config
 # CUDA for PyTorch
 use_cuda = torch.cuda.is_available()
-device = torch.device("cuda:0" if use_cuda else "cpu")
+device = torch.device("cuda" if use_cuda else "cpu")
 torch.backends.cudnn.benchmark = True
 
 torch.set_default_dtype(torch.float64)
@@ -67,7 +67,7 @@ else:
     metric_avg = 'macro'
 
 
-if mode != '':
+if mode =='normal':
     fname = dset_directory + "/" + mode + "_d_processed.p"
 else:
     fname = dset_directory + "/d_processed.p"
@@ -86,7 +86,7 @@ s_supervised = torch.tensor(objs[2]).double()
 print('supervised shape', objs[2].shape)
 
 objs = []
-if mode != '':
+if mode =='normal':
     fname = dset_directory + "/" + mode + "_U_processed.p"
 else:
     fname = dset_directory + "/U_processed.p"
@@ -115,7 +115,7 @@ print('UNsupervised shape', objs[2].shape)
 print('Length of U is', len(x_unsupervised))
 
 objs = []
-if mode != '':
+if mode =='normal':
     fname = dset_directory + "/" + mode + "_validation_processed.p"
 else:
     fname = dset_directory + "/validation_processed.p"
@@ -134,7 +134,7 @@ l_valid = torch.tensor(objs[2]).long()
 s_valid = torch.tensor(objs[2]).double()
 print('Valid shape', x_valid.shape)
 objs1 = []
-if mode != '':
+if mode =='normal':
     fname = dset_directory + "/" + mode + "_test_processed.p"
 else:
     fname = dset_directory + "/test_processed.p"
@@ -159,7 +159,7 @@ n_features = x_supervised.shape[1]
 # k = torch.from_numpy(np.array([0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0])).long()
 #lf_classes_file = sys.argv[11]
 
-if mode != '':
+if mode =='normal':
     fname = dset_directory + '/' + mode + '_k.npy'
 else:
     fname = dset_directory + '/k.npy'
@@ -225,7 +225,7 @@ s = torch.cat([s_supervised, s_unsupervised])
 x_train = torch.cat([x_supervised, x_unsupervised])
 y_train = torch.cat([y_supervised, y_unsupervised])
 supervised_mask = torch.cat([torch.ones(l_supervised.shape[0]), torch.zeros(l_unsupervised.shape[0])])
-print('X_train', x_train.shape, 'l',l.shape, 's', s.shape)
+
 
 ## Quality Guides ##
 
@@ -241,7 +241,7 @@ print('X_train', x_train.shape, 'l',l.shape, 's', s.shape)
 # s_valid = s_valid[0:len(x_supervised)]
 # l_valid = l_valid[0:len(x_supervised)]
 
-# print(l_valid.shape)
+print('l_valid',l_valid.shape)
 # print(l_valid[0])
 
 num_runs = int(sys.argv[9])
@@ -411,6 +411,7 @@ for lo in range(0,num_runs):
             gm_valid_acc = score(y_valid, y_pred)
             gm_prec, gm_recall = 0,0
         else:
+#            print(y_pred,y_valid)
             gm_valid_acc = score(y_valid, y_pred, average=metric_avg)
 
         #LR Test
@@ -462,49 +463,49 @@ for lo in range(0,num_runs):
         # wandb.log({wname:lr_valid_acc, 
             # wnamegm:gm_valid_acc,'custom_step':epoch})
 
-        if epoch > 5 and gm_valid_acc >= best_score_gm_val and gm_valid_acc >= best_score_lr_val:
-            # print("Inside Best hu Epoch: {}\t Test GM accuracy_score: {}".format(epoch, gm_acc ))
-            # print("Inside Best hu Epoch: {}\tGM accuracy_score(Valid): {}".format(epoch, gm_valid_acc))
-            if gm_valid_acc == best_score_gm_val or gm_valid_acc == best_score_lr_val:
-                if best_score_gm < gm_acc or best_score_lr < lr_acc:
-                    best_epoch_lr = epoch
-                    best_score_lr_val = lr_valid_acc
-                    best_score_lr = lr_acc
+        # if epoch > 5 and gm_valid_acc >= best_score_gm_val and gm_valid_acc >= best_score_lr_val:
+        #     # print("Inside Best hu Epoch: {}\t Test GM accuracy_score: {}".format(epoch, gm_acc ))
+        #     # print("Inside Best hu Epoch: {}\tGM accuracy_score(Valid): {}".format(epoch, gm_valid_acc))
+        #     if gm_valid_acc == best_score_gm_val or gm_valid_acc == best_score_lr_val:
+        #         if best_score_gm < gm_acc or best_score_lr < lr_acc:
+        #             best_epoch_lr = epoch
+        #             best_score_lr_val = lr_valid_acc
+        #             best_score_lr = lr_acc
 
-                    best_epoch_gm = epoch
-                    best_score_gm_val = gm_valid_acc
-                    best_score_gm = gm_acc
+        #             best_epoch_gm = epoch
+        #             best_score_gm_val = gm_valid_acc
+        #             best_score_gm = gm_acc
 
-                    best_score_lr_prec = lr_prec
-                    best_score_lr_recall  = lr_recall
-                    best_score_gm_prec = gm_prec
-                    best_score_gm_recall  = gm_recall
-            else:
-                best_epoch_lr = epoch
-                best_score_lr_val = lr_valid_acc
-                best_score_lr = lr_acc
+        #             best_score_lr_prec = lr_prec
+        #             best_score_lr_recall  = lr_recall
+        #             best_score_gm_prec = gm_prec
+        #             best_score_gm_recall  = gm_recall
+        #     else:
+        #         best_epoch_lr = epoch
+        #         best_score_lr_val = lr_valid_acc
+        #         best_score_lr = lr_acc
 
-                best_epoch_gm = epoch
-                best_score_gm_val = gm_valid_acc
-                best_score_gm = gm_acc
+        #         best_epoch_gm = epoch
+        #         best_score_gm_val = gm_valid_acc
+        #         best_score_gm = gm_acc
 
-                best_score_lr_prec = lr_prec
-                best_score_lr_recall  = lr_recall
-                best_score_gm_prec = gm_prec
-                best_score_gm_recall  = gm_recall
-                stop_pahle = []
-                stop_pahle_gm = []
-            checkpoint = {'theta': theta,'pi': pi}
-            # torch.save(checkpoint, save_folder+"/gm_"+str(epoch)    +".pt")
-            checkpoint = {'params': lr_model.state_dict()}
-            # torch.save(checkpoint, save_folder+"/lr_"+ str(epoch)+".pt")
+        #         best_score_lr_prec = lr_prec
+        #         best_score_lr_recall  = lr_recall
+        #         best_score_gm_prec = gm_prec
+        #         best_score_gm_recall  = gm_recall
+        #         stop_pahle = []
+        #         stop_pahle_gm = []
+        #     checkpoint = {'theta': theta,'pi': pi}
+        #     # torch.save(checkpoint, save_folder+"/gm_"+str(epoch)    +".pt")
+        #     checkpoint = {'params': lr_model.state_dict()}
+        #     # torch.save(checkpoint, save_folder+"/lr_"+ str(epoch)+".pt")
             
 
         if epoch > 5 and lr_valid_acc >= best_score_lr_val and lr_valid_acc >= best_score_gm_val:
             # print("Inside Best hu Epoch: {}\tTest LR accuracy_score: {}".format(epoch, lr_acc ))
             # print("Inside Best hu Epoch: {}\tLR accuracy_score(Valid): {}".format(epoch, lr_valid_acc))
-            if lr_valid_acc == best_score_lr_val or lr_valid_acc == best_score_gm_val:
-                if best_score_lr < lr_acc or best_score_gm < gm_acc:
+            if lr_valid_acc == best_score_lr_val:
+                if best_score_lr < lr_acc:
                     
                     best_epoch_lr = epoch
                     best_score_lr_val = lr_valid_acc
