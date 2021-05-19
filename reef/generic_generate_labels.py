@@ -193,9 +193,9 @@ if sys.argv[7] == 'lstm':
     mkt.make(train_text, val_text, test_text)
 
 upto = int(len(val_ground)/2 ) # Size of d set i.e. Labelled set
-d_L, U_L = train_ground[:upto], train_ground[upto: ]
-d_x, U_x = train_primitive_matrix[:upto], train_primitive_matrix[upto: ] #features
-d_l, U_l = trx[:upto,:], trx[upto:,:] #LFs
+d_L, U_L = val_ground[:upto], train_ground#[upto: ]
+d_x, U_x = val_primitive_matrix[:upto], train_primitive_matrix#[upto: ] #features
+d_l, U_l = valx[:upto,:], trx#[upto:,:] #LFs
 
 
 d_d = np.array([1.0] * len(d_x))
@@ -245,9 +245,9 @@ with open(os.path.join(pickle_save, file_name),"wb") as f:
 
 
 
-val_L = val_ground
-val_x = val_primitive_matrix #features
-val_l = valx.copy() #L
+val_L = val_ground[upto:]
+val_x = val_primitive_matrix[upto:] #features
+val_l = valx[upto:,:] #L
 val_d = np.array([1.0] * len(val_x))
 val_r = np.zeros(val_l.shape) #rule exemplar coupling unavailable
 val_L[np.where(val_L==-1)[0]] = 0
@@ -298,7 +298,7 @@ print('Final Size of d set , U set  , validation set , test set', len(d_L), len(
 
 
 # objs = []
-# with open('normal_test_processed.p', 'rb') as f:
+# with open('normal_validation_processed.p', 'rb') as f:
 #     while 1:
 #         try:
 #             o = pickle.load(f)
