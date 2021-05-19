@@ -161,6 +161,7 @@ class LabelAggregator(object):
     def marginals(self, X):
         X = X.todense()
         marginals = odds_to_prob(X.dot(self.w))
+        # print('marginal in label_agg ', marginals.shape)
         return np.array(marginals)[0]
 
 
