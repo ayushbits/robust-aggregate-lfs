@@ -330,7 +330,7 @@ class HeuristicGenerator(object):
         self.train_accuracy = calculate_accuracy(self.train_marginals, self.b, self.train_ground)
         self.val_coverage = calculate_coverage(self.val_marginals, self.b, self.val_ground)
         self.train_coverage = calculate_coverage(self.train_marginals, self.b, self.train_ground)
-        return self.val_accuracy, self.train_accuracy, self.val_coverage, self.train_coverage , self.L_val, self.L_train, self.L_test
+        return self.val_accuracy, self.train_accuracy, self.val_coverage, self.train_coverage , self.L_val, self.L_train, self.L_test, self.hf
 
     def heuristic_stats(self):
         '''For each heuristic, we want the following:

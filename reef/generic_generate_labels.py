@@ -81,7 +81,7 @@ else:
     keep_2nd=1
 
 training_marginals = []
-
+HF = []
 num_loop = int(sys.argv[5])
 for j in range(0,1):
     print('j',j)
@@ -111,7 +111,11 @@ for j in range(0,1):
 
         #Save evaluation metrics
         val_lfs, train_lfs = [], []
-        va,ta, vc, tc, val_lfs, train_lfs, test_lfs = hg.evaluate()
+        hf = []
+        va,ta, vc, tc, val_lfs, train_lfs, test_lfs, hf = hg.evaluate()
+        HF = hf
+        print(hf)
+        break
         validation_accuracy.append(va)
         training_accuracy.append(ta)
         training_marginals.append(hg.vf.train_marginals)
@@ -126,7 +130,7 @@ for j in range(0,1):
             np.save(os.path.join(save_path ,test_file_name), test_lfs)
             print('labels saved') 
      
-        
+         
         #Find low confidence datapoints in the labeled set
         hg.find_feedback()
         idx = hg.feedback_idx
