@@ -12,12 +12,12 @@ from losses import *
 import pickle
 from torch.utils.data import TensorDataset, DataLoader
 import os
-import wandb
-wandb.init(project='rewt', entity='spear-plus')
-conf = wandb.config
+# import wandb
+# wandb.init(project='rewt', entity='spear-plus')
+# conf = wandb.config
 # CUDA for PyTorch
 use_cuda = torch.cuda.is_available()
-device = torch.device("cuda" if use_cuda else "cpu")
+device = torch.device("cpu")
 print(device)
 torch.backends.cudnn.benchmark = True
 
@@ -34,13 +34,13 @@ lr_fnetwork = float(sys.argv[15])
 lr_gm = float(sys.argv[16])
 name_dset = dset_directory.split("/")[-1].lower()
 print('dset is ', name_dset)
-conf.learning_rate = lr_fnetwork #wandb
+# conf.learning_rate = lr_fnetwork #wandb
 mode = sys.argv[17]
 metric = sys.argv[18]
 
 objs = []
-wrunname = name_dset + "_" + mode +"_reweight"#wandb
-wandb.run.name = wrunname #wandb
+# wrunname = name_dset + "_" + mode +"_reweight"#wandb
+# wandb.run.name = wrunname #wandb
 # if name_dset =='youtube' or name_dset=='census':
 if metric=='accuracy':
     from sklearn.metrics import accuracy_score as score
@@ -52,7 +52,7 @@ else:
     metric_avg = 'macro'
 
 
-from weighted_cage import *
+from gpu_weighted_cage import *
 import higher
 import copy
 
@@ -403,7 +403,7 @@ supervised_mask = torch.cat([torch.ones(l_supervised.shape[0]), torch.zeros(l_un
 # print(l_valid[0])
 
 num_runs = int(sys.argv[9])
-conf.n_units = num_runs
+# conf.n_units = num_runs
 final_score_gm, final_score_lr, final_score_gm_val, final_score_lr_val = [],[],[],[]
 final_score_lr_prec, final_score_lr_recall, final_score_gm_prec, final_score_gm_recall = [],[],[],[]
 for lo in range(0,num_runs):
@@ -425,7 +425,7 @@ for lo in range(0,num_runs):
         print('Please provide feature based model : lr or nn')
         exit()
 
-    wandb.watch(lr_model)
+    # wandb.watch(lr_model)
     optimizer = torch.optim.Adam([{"params": lr_model.parameters()}, {"params": [pi, pi_y, theta]}], lr=0.001)
     optimizer_lr = torch.optim.Adam(lr_model.parameters(), lr=lr_fnetwork)
     optimizer_gm = torch.optim.Adam([theta, pi, pi_y], lr=lr_gm, weight_decay=0)
@@ -535,8 +535,8 @@ for lo in range(0,num_runs):
                 loss.backward()
                 optimizer_gm.step()
                 optimizer_lr.step()
-        wname = "Run_"+str(lo)+" Train Loss" #wandb
-        wandb.log({wname:loss, 'custom_step':epoch}) #wandb
+        # wname = "Run_"+str(lo)+" Train Loss" #wandb
+        # wandb.log({wname:loss, 'custom_step':epoch}) #wandb
         y_pred = np.argmax(probability(theta, pi_y, pi, l_test.to(device), s_test.to(device), k, n_classes, continuous_mask, weights, device=device).cpu().detach().numpy(), 1)
 
         if metric=='accuracy':
@@ -587,8 +587,8 @@ for lo in range(0,num_runs):
  #       print("Epoch: {}\tLR accuracy_score(Valid): {}".format(epoch, lr_valid_acc))
         wname = "Run_"+str(lo)+" LR valid score"
         wnamegm = 'Run_' + str(lo) + ' GM valid score'
-        wandb.log({wname:lr_valid_acc,
-            wnamegm:gm_valid_acc,'custom_step':epoch})
+        # wandb.log({wname:lr_valid_acc,
+            # wnamegm:gm_valid_acc,'custom_step':epoch})
         if epoch > 5 and gm_valid_acc >= best_score_gm_val and gm_valid_acc >= best_score_lr_val:
             # print("Inside Best hu Epoch: {}\t Test GM accuracy_score: {}".format(epoch, gm_acc ))
             # print("Inside Best hu Epoch: {}\tGM accuracy_score(Valid): {}".format(epoch, gm_valid_acc))
@@ -700,7 +700,7 @@ for lo in range(0,num_runs):
     final_score_lr_val.append(best_score_lr_val)
 
 
-wandb.log({'test_lr':np.mean(final_score_lr),'test_gm':np.mean(final_score_gm)})#wandb
+# wandb.log({'test_lr':np.mean(final_score_lr),'test_gm':np.mean(final_score_gm)})#wandb
 
 print("===================================================")
 print("TEST Averaged scores LR", np.mean(final_score_lr))
@@ -718,8 +718,8 @@ wt = weights.cpu().numpy()
 np.save(os.path.join(dset_directory, 'weights'), wt)
 print('Sorted weights ', wt.argsort())
 
-wandb.log({'test_mean_LR ':np.mean(final_score_lr), 'test_mean_GM': np.mean(final_score_gm)}) #wandb
-wandb.log({'test_STD_LR ':np.std(final_score_lr), 'test_STD_GM': np.std(final_score_gm)}) #wandb
+# wandb.log({'test_mean_LR ':np.mean(final_score_lr), 'test_mean_GM': np.mean(final_score_gm)}) #wandb
+# wandb.log({'test_STD_LR ':np.std(final_score_lr), 'test_STD_GM': np.std(final_score_gm)}) #wandb
 
 
 

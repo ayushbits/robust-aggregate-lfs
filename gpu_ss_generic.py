@@ -62,6 +62,9 @@ from sklearn.metrics import recall_score as recall_score
 if metric=='accuracy':
     from sklearn.metrics import accuracy_score as score
     print('inside accuracy')
+elif metric =='binary':
+	from sklearn.metrics import f1_score as score
+	metric_avg = 'binary'
 else:
     from sklearn.metrics import f1_score as score
     metric_avg = 'macro'
@@ -501,11 +504,11 @@ for lo in range(0,num_runs):
         #     # torch.save(checkpoint, save_folder+"/lr_"+ str(epoch)+".pt")
             
 
-        if epoch > 5 and lr_valid_acc >= best_score_lr_val and lr_valid_acc >= best_score_gm_val:
+        if epoch > 5 and gm_valid_acc >= best_score_gm_val:# and lr_valid_acc >= best_score_lr_val:
             # print("Inside Best hu Epoch: {}\tTest LR accuracy_score: {}".format(epoch, lr_acc ))
             # print("Inside Best hu Epoch: {}\tLR accuracy_score(Valid): {}".format(epoch, lr_valid_acc))
-            if lr_valid_acc == best_score_lr_val:
-                if best_score_lr < lr_acc:
+            if gm_valid_acc == best_score_gm_val:
+                if best_score_gm < gm_acc:
                     
                     best_epoch_lr = epoch
                     best_score_lr_val = lr_valid_acc

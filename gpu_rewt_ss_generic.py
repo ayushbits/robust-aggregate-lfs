@@ -12,9 +12,9 @@ from losses import *
 import pickle
 from torch.utils.data import TensorDataset, DataLoader
 import os
-import wandb
-wandb.init(project='rewt', entity='spear-plus')
-conf = wandb.config
+# import wandb
+# wandb.init(project='rewt', entity='spear-plus')
+# conf = wandb.config
 # CUDA for PyTorch
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda:0" if use_cuda else "cpu")
@@ -34,13 +34,13 @@ lr_fnetwork = float(sys.argv[15])
 lr_gm = float(sys.argv[16])
 name_dset = dset_directory.split("/")[-1].lower()
 print('dset is ', name_dset)
-conf.learning_rate = lr_fnetwork #wandb
+# conf.learning_rate = lr_fnetwork #wandb
 mode = sys.argv[17]
 metric = sys.argv[18]
 
 objs = []
 wrunname = name_dset + "_" + mode +"_reweight"#wandb
-wandb.run.name = wrunname #wandb
+# wandb.run.name = wrunname #wandb
 # if name_dset =='youtube' or name_dset=='census':
 if metric=='accuracy':
     from sklearn.metrics import accuracy_score as score
@@ -129,7 +129,7 @@ def rewt_lfs(sample, lr_model, theta, pi_y, pi, wts):
             temp_wts = wts
         return temp_wts
 
-def rewt_lfs1(sample, lr_model, theta, pi_y, pi, wts):
+def rewt_lfs1(sample, lr_model, theta, pi_y, pi, wts, feat_model):
     wts_param = torch.nn.Parameter(wts, requires_grad=True)
     lr_model.register_parameter("wts", wts_param)
     theta_param = torch.nn.Parameter(theta, requires_grad=True)
@@ -191,8 +191,7 @@ def rewt_lfs1(sample, lr_model, theta, pi_y, pi, wts):
             loss_4 = 0
 
         if sys.argv[6] == 'l5':
-            loss_5 = log_likelihood_loss(fmodel.theta, fmodel.pi_y, fmodel.pi, sample[2][unsupervised_indices], sample[3][unsupervised_indices],
-                                     k, n_classes, continuous_mask, fmodel.wts, device)
+            loss_5 = log_likelihood_loss(fmodel.theta, fmodel.pi_y, fmodel.pi, sample[2][unsupervised_indices], sample[3][unsupervised_indices], k, n_classes, continuous_mask, fmodel.wts, device)
         else:
             loss_5 = 0
 
@@ -405,7 +404,7 @@ supervised_mask = torch.cat([torch.ones(l_supervised.shape[0]), torch.zeros(l_un
 # print(l_valid[0])
 
 num_runs = int(sys.argv[9])
-conf.n_units = num_runs
+# conf.n_units = num_runs
 final_score_gm, final_score_lr, final_score_gm_val, final_score_lr_val = [],[],[],[]
 final_score_lr_prec, final_score_lr_recall, final_score_gm_prec, final_score_gm_recall = [],[],[],[]
 for lo in range(0,num_runs):
@@ -427,7 +426,7 @@ for lo in range(0,num_runs):
         print('Please provide feature based model : lr or nn')
         exit()
 
-    wandb.watch(lr_model)
+    # wandb.watch(lr_model)
     optimizer = torch.optim.Adam([{"params": lr_model.parameters()}, {"params": [pi, pi_y, theta]}], lr=0.001)
     optimizer_lr = torch.optim.Adam(lr_model.parameters(), lr=lr_fnetwork)
     optimizer_gm = torch.optim.Adam([theta, pi, pi_y], lr=lr_gm, weight_decay=0)
@@ -464,7 +463,7 @@ for lo in range(0,num_runs):
             theta1 = copy.deepcopy(theta)
             pi_y1 = copy.deepcopy(pi_y)
             pi1 = copy.deepcopy(pi)
-            weights = rewt_lfs1(sample, lr_model1, theta1, pi_y1, pi1, weights)
+            weights = rewt_lfs1(sample, lr_model1, theta1, pi_y1, pi1, weights, feat_model)
             optimizer_lr.zero_grad()
             optimizer_gm.zero_grad()
 
@@ -537,8 +536,8 @@ for lo in range(0,num_runs):
                 loss.backward()
                 optimizer_gm.step()
                 optimizer_lr.step()
-        wname = "Run_"+str(lo)+" Train Loss" #wandb
-        wandb.log({wname:loss, 'custom_step':epoch}) #wandb
+        # wname = "Run_"+str(lo)+" Train Loss" #wandb
+        # wandb.log({wname:loss, 'custom_step':epoch}) #wandb
         y_pred = np.argmax(probability(theta, pi_y, pi, l_test.to(device), s_test.to(device), k, n_classes, continuous_mask, weights, device=device).cpu().detach().numpy(), 1)
 
         if metric=='accuracy':
@@ -581,53 +580,53 @@ for lo in range(0,num_runs):
             lr_prec,lr_recall,gm_prec,gm_recall = 0,0,0,0
         else:
             lr_valid_acc =score(y_valid, y_pred, average=metric_avg)
+        if epoch %5 ==0:
+            print("Epoch: {}\t Test GM accuracy_score: {}".format(epoch, gm_acc ))
+    #         print("Epoch: {}\tGM accuracy_score(Valid): {}".format(epoch, gm_valid_acc))
+            print("Epoch: {}\tTest LR accuracy_score: {}".format(epoch, lr_acc))    
+    #         print("Epoch: {}\tLR accuracy_score(Valid): {}".format(epoch, lr_valid_acc))
 
-        # lr_valid_acc = score(y_valid, y_pred, average="macro")
-        # print("Epoch: {}\t Test GM accuracy_score: {}".format(epoch, gm_acc ))
-#        print("Epoch: {}\tGM accuracy_score(Valid): {}".format(epoch, gm_valid_acc))
-        # print("Epoch: {}\tTest LR accuracy_score: {}".format(epoch, lr_acc ))
- #       print("Epoch: {}\tLR accuracy_score(Valid): {}".format(epoch, lr_valid_acc))
         wname = "Run_"+str(lo)+" LR valid score"
         wnamegm = 'Run_' + str(lo) + ' GM valid score'
-        wandb.log({wname:lr_valid_acc,
-            wnamegm:gm_valid_acc,'custom_step':epoch})
-        if epoch > 5 and gm_valid_acc >= best_score_gm_val and gm_valid_acc >= best_score_lr_val:
-            # print("Inside Best hu Epoch: {}\t Test GM accuracy_score: {}".format(epoch, gm_acc ))
-            # print("Inside Best hu Epoch: {}\tGM accuracy_score(Valid): {}".format(epoch, gm_valid_acc))
-            if gm_valid_acc == best_score_gm_val or gm_valid_acc == best_score_lr_val:
-                if best_score_gm < gm_acc or best_score_lr < lr_acc:
-                    best_epoch_lr = epoch
-                    best_score_lr_val = lr_valid_acc
-                    best_score_lr = lr_acc
+        # wandb.log({wname:lr_valid_acc,
+        #     wnamegm:gm_valid_acc,'custom_step':epoch})
+        # if epoch > 5 and gm_valid_acc >= best_score_gm_val and gm_valid_acc >= best_score_lr_val:
+        #     # print("Inside Best hu Epoch: {}\t Test GM accuracy_score: {}".format(epoch, gm_acc ))
+        #     # print("Inside Best hu Epoch: {}\tGM accuracy_score(Valid): {}".format(epoch, gm_valid_acc))
+        #     if gm_valid_acc == best_score_gm_val or gm_valid_acc == best_score_lr_val:
+        #         if best_score_gm < gm_acc or best_score_lr < lr_acc:
+        #             best_epoch_lr = epoch
+        #             best_score_lr_val = lr_valid_acc
+        #             best_score_lr = lr_acc
 
-                    best_epoch_gm = epoch
-                    best_score_gm_val = gm_valid_acc
-                    best_score_gm = gm_acc
+        #             best_epoch_gm = epoch
+        #             best_score_gm_val = gm_valid_acc
+        #             best_score_gm = gm_acc
 
-                    best_score_lr_prec = lr_prec
-                    best_score_lr_recall  = lr_recall
-                    best_score_gm_prec = gm_prec
-                    best_score_gm_recall  = gm_recall
-            else:
-                best_epoch_lr = epoch
-                best_score_lr_val = lr_valid_acc
-                best_score_lr = lr_acc
+        #             best_score_lr_prec = lr_prec
+        #             best_score_lr_recall  = lr_recall
+        #             best_score_gm_prec = gm_prec
+        #             best_score_gm_recall  = gm_recall
+        #     else:
+        #         best_epoch_lr = epoch
+        #         best_score_lr_val = lr_valid_acc
+        #         best_score_lr = lr_acc
 
-                best_epoch_gm = epoch
-                best_score_gm_val = gm_valid_acc
-                best_score_gm = gm_acc
+        #         best_epoch_gm = epoch
+        #         best_score_gm_val = gm_valid_acc
+        #         best_score_gm = gm_acc
 
-                best_score_lr_prec = lr_prec
-                best_score_lr_recall  = lr_recall
-                best_score_gm_prec = gm_prec
-                best_score_gm_recall  = gm_recall
+        #         best_score_lr_prec = lr_prec
+        #         best_score_lr_recall  = lr_recall
+        #         best_score_gm_prec = gm_prec
+        #         best_score_gm_recall  = gm_recall
 
-                stop_pahle = []
-                stop_pahle_gm = []
-            checkpoint = {'theta': theta,'pi': pi}
-            # torch.save(checkpoint, save_folder+"/gm_"+str(epoch)    +".pt")
-            checkpoint = {'params': lr_model.state_dict()}
-            # torch.save(checkpoint, save_folder+"/lr_"+ str(epoch)+".pt")
+        #         stop_pahle = []
+        #         stop_pahle_gm = []
+        #     checkpoint = {'theta': theta,'pi': pi}
+        #     # torch.save(checkpoint, save_folder+"/gm_"+str(epoch)    +".pt")
+        #     checkpoint = {'params': lr_model.state_dict()}
+        #     # torch.save(checkpoint, save_folder+"/lr_"+ str(epoch)+".pt")
 
 
         if epoch > 5 and lr_valid_acc >= best_score_lr_val and lr_valid_acc >= best_score_gm_val:
@@ -702,7 +701,7 @@ for lo in range(0,num_runs):
     final_score_lr_val.append(best_score_lr_val)
 
 
-wandb.log({'test_lr':np.mean(final_score_lr),'test_gm':np.mean(final_score_gm)})#wandb
+# wandb.log({'test_lr':np.mean(final_score_lr),'test_gm':np.mean(final_score_gm)})#wandb
 
 print("===================================================")
 print("TEST Averaged scores LR", np.mean(final_score_lr))
@@ -720,7 +719,7 @@ wt = weights.cpu().numpy()
 np.save(os.path.join(dset_directory, 'weights'), wt)
 print('Sorted weights ', wt.argsort())
 
-wandb.log({'test_mean_LR ':np.mean(final_score_lr), 'test_mean_GM': np.mean(final_score_gm)}) #wandb
-wandb.log({'test_STD_LR ':np.std(final_score_lr), 'test_STD_GM': np.std(final_score_gm)}) #wandb
+# wandb.log({'test_mean_LR ':np.mean(final_score_lr), 'test_mean_GM': np.mean(final_score_gm)}) #wandb
+# wandb.log({'test_STD_LR ':np.std(final_score_lr), 'test_STD_GM': np.std(final_score_gm)}) #wandb
 
 
