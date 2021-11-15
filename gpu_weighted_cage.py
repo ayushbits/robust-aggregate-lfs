@@ -61,14 +61,14 @@ def log_likelihood_loss_supervised(theta, pi_y, pi, y, l, s, k, n_classes, conti
     prob = (prob.t() / prob.sum(1)).t()
     return torch.nn.NLLLoss()(torch.log(prob), y)
 
-
+    
 def precision_loss(theta, k, n_classes, a, weights, device):
     n_lfs = k.shape[0]
     prob = torch.ones(n_lfs, n_classes, device=device).double()
     z_per_lf = 0
     for y in range(n_classes):
-        #m_y = torch.exp(phi(theta[y] * weights, torch.ones(n_lfs)))
-        m_y = torch.exp(phi(theta[y], torch.ones(n_lfs, device=device), device))
+        m_y = torch.exp(phi(theta[y] * weights, torch.ones(n_lfs, device=device), device))
+        #m_y = torch.exp(phi(theta[y], torch.ones(n_lfs, device=device), device))
         per_lf_matrix = torch.tensordot((1 + m_y).view(-1, 1), torch.ones(m_y.shape, device=device).double().view(1, -1), 1) - torch.eye(n_lfs, device=device).double()
         prob[:, y] = per_lf_matrix.prod(0).double()
         z_per_lf += prob[:, y].double()
@@ -76,9 +76,27 @@ def precision_loss(theta, k, n_classes, a, weights, device):
     correct_prob = torch.zeros(n_lfs, device=device)
     for i in range(n_lfs):
         correct_prob[i] = prob[i, k[i]]
-    #loss = (1 / math.exp(1)) * (a * torch.log(correct_prob).double() + (1 - a) * torch.log(1 - correct_prob).double())
-    loss = (1/math.exp(1)) * (a * torch.exp(weights) * torch.log(correct_prob).double() + (1 - a) *  torch.exp(weights) * torch.log(1 - correct_prob).double())
+    loss = (1 / math.exp(1)) * (a * torch.log(correct_prob).double() + (1 - a) * torch.log(1 - correct_prob).double())
+    #loss = (1/math.exp(1)) * (a * torch.exp(weights) * torch.log(correct_prob).double() + (1 - a) *  torch.exp(weights) * torch.log(1 - correct_prob).double())
     return -loss.sum()
+
+# def precision_loss(theta, k, n_classes, a, weights, device):
+#     n_lfs = k.shape[0]
+#     prob = torch.ones(n_lfs, n_classes, device=device).double()
+#     z_per_lf = 0
+#     for y in range(n_classes):
+#         #m_y = torch.exp(phi(theta[y] * weights, torch.ones(n_lfs)))
+#         m_y = torch.exp(phi(theta[y], torch.ones(n_lfs, device=device), device))
+#         per_lf_matrix = torch.tensordot((1 + m_y).view(-1, 1), torch.ones(m_y.shape, device=device).double().view(1, -1), 1) - torch.eye(n_lfs, device=device).double()
+#         prob[:, y] = per_lf_matrix.prod(0).double()
+#         z_per_lf += prob[:, y].double()
+#     prob /= z_per_lf.view(-1, 1)
+#     correct_prob = torch.zeros(n_lfs, device=device)
+#     for i in range(n_lfs):
+#         correct_prob[i] = prob[i, k[i]]
+#     #loss = (1 / math.exp(1)) * (a * torch.log(correct_prob).double() + (1 - a) * torch.log(1 - correct_prob).double())
+#     loss = (1/math.exp(1)) * (a * torch.exp(weights) * torch.log(correct_prob).double() + (1 - a) *  torch.exp(weights) * torch.log(1 - correct_prob).double())
+#     return -loss.sum()
 
     # n_lfs = k.shape[0]
     # prob = torch.ones(n_lfs, n_classes).double()

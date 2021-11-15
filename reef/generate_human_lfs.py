@@ -134,7 +134,8 @@ class Generate_data:
 
         if mode == "validation":
             length = int(len(xL)/2)
-            print('Length is', length)
+            d_len = int(length*1.5)
+            print('Length is', d_len)
             print(np.array(xx).shape)
             print(np.array(xl).shape)
             print(np.array(xm).shape)
@@ -148,12 +149,12 @@ class Generate_data:
                 # print(len(d_x))
                 # d_x = sentences_to_elmo_sentence_embs(d_x)
                 # print(len(d_x))
-                pickle.dump(np.array(xx[0:length,:]), pkl_f)
-                pickle.dump(np.array(xl[0:length]), pkl_f)
-                pickle.dump(np.array(xm[0:length]), pkl_f)
-                pickle.dump(np.array(xL[0:length]), pkl_f)
-                pickle.dump(np.array(xd[0:length]), pkl_f)
-                pickle.dump(np.array(xr[0:length]), pkl_f)
+                pickle.dump(np.array(xx[0:d_len,:]), pkl_f)
+                pickle.dump(np.array(xl[0:d_len]), pkl_f)
+                pickle.dump(np.array(xm[0:d_len]), pkl_f)
+                pickle.dump(np.array(xL[0:d_len]), pkl_f)
+                pickle.dump(np.array(xd[0:d_len]), pkl_f)
+                pickle.dump(np.array(xr[0:d_len]), pkl_f)
 
             with open(os.path.join(self.save_dir,"validation_processed.p"), "wb") as pkl_f:
 
@@ -162,12 +163,12 @@ class Generate_data:
                 # print(len(d_x))
                 # d_x = sentences_to_elmo_sentence_embs(d_x)
                 # print(len(d_x))
-                pickle.dump(np.array(xx[length:]), pkl_f)
-                pickle.dump(np.array(xl[length:]), pkl_f)
-                pickle.dump(np.array(xm[length:]), pkl_f)
-                pickle.dump(np.array(xL[length:]), pkl_f)
-                pickle.dump(np.array(xd[length:]), pkl_f)
-                pickle.dump(np.array(xr[length:]), pkl_f)
+                pickle.dump(np.array(xx[d_len:]), pkl_f)
+                pickle.dump(np.array(xl[d_len:]), pkl_f)
+                pickle.dump(np.array(xm[d_len:]), pkl_f)
+                pickle.dump(np.array(xL[d_len:]), pkl_f)
+                pickle.dump(np.array(xd[d_len:]), pkl_f)
+                pickle.dump(np.array(xr[d_len:]), pkl_f)
 
 
         else:

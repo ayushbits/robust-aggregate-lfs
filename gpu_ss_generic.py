@@ -1,3 +1,5 @@
+#CUDA_LAUNCH_BLOCKING=0 python3 gpu_ss_generic.py /tmp l1 0 l3 l4 0 l6 qg 1 ../Semi_Supervised_LFs/Data/TREC 6 nn 0 32 0.0003 0.01 none f1 adjust
+
 import torch
 import sys
 import numpy as np
@@ -39,6 +41,7 @@ dataset = dset_directory.split("/")[-2].lower()
 print('dset is ', dataset, name_dset)
 mode = sys.argv[17] #''
 metric = sys.argv[18]
+adjust = sys.argv[19]
 # conf.learning_rate = lr_fnetwork #wandb
 # wrunname = name_dset + "_" + mode +"_generic"#wandb
 # wandb.run.name = wrunname #wandb
@@ -132,10 +135,29 @@ with open(fname, 'rb') as f:
         objs.append(o)
 
 x_valid = torch.tensor(objs[0]).double()
-y_valid = objs[3]
+y_valid = torch.tensor(objs[3]).long()
 l_valid = torch.tensor(objs[2]).long()
 s_valid = torch.tensor(objs[2]).double()
 print('Valid shape', x_valid.shape)
+adjust = 'adjust'
+if adjust =='adjust':
+    tmp = torch.cat((x_supervised, x_valid))
+    leng = int(len(tmp)/2)
+
+    x_supervised, x_valid = tmp[0:leng], tmp[leng:]
+
+    tmp = torch.cat((y_supervised, y_valid))
+    y_supervised, y_valid = tmp[0:leng], tmp[leng:]
+
+    tmp = torch.cat((s_supervised, s_valid))
+    s_supervised, s_valid = tmp[0:leng], tmp[leng:]
+
+    tmp = torch.cat((l_supervised, l_valid))
+    l_supervised, l_valid = tmp[0:leng], tmp[leng:]
+
+print('after adjusting Valid shape', x_valid.shape)
+print('after adjusting supervised shape', x_supervised.shape)
+# exit()
 objs1 = []
 if mode =='normal':
     fname = dset_directory + "/" + mode + "_test_processed.p"
@@ -456,11 +478,11 @@ for lo in range(0,num_runs):
             gm_prec, gm_recall = 0,0
         else:
             lr_valid_acc = score(y_valid, y_pred, average=metric_avg)
-        if epoch %5 ==0:
+        if epoch %1 ==0:
             print("Epoch: {}\t Test GM accuracy_score: {}".format(epoch, gm_acc ))
-    #         print("Epoch: {}\tGM accuracy_score(Valid): {}".format(epoch, gm_valid_acc))
+            print("Epoch: {}\tGM accuracy_score(Valid): {}".format(epoch, gm_valid_acc))
             print("Epoch: {}\tTest LR accuracy_score: {}".format(epoch, lr_acc))    
-    #         print("Epoch: {}\tLR accuracy_score(Valid): {}".format(epoch, lr_valid_acc))
+            print("Epoch: {}\tLR accuracy_score(Valid): {}".format(epoch, lr_valid_acc))
         wname = "Run_"+str(lo)+" LR valid score"
         wnamegm = 'Run_' + str(lo) + ' GM valid score'
         # wandb.log({wname:lr_valid_acc, 
@@ -504,11 +526,11 @@ for lo in range(0,num_runs):
         #     # torch.save(checkpoint, save_folder+"/lr_"+ str(epoch)+".pt")
             
 
-        if epoch > 5 and gm_valid_acc >= best_score_gm_val:# and lr_valid_acc >= best_score_lr_val:
+        if epoch > 5 and lr_valid_acc >= best_score_lr_val:# and lr_valid_acc >= best_score_lr_val:
             # print("Inside Best hu Epoch: {}\tTest LR accuracy_score: {}".format(epoch, lr_acc ))
             # print("Inside Best hu Epoch: {}\tLR accuracy_score(Valid): {}".format(epoch, lr_valid_acc))
-            if gm_valid_acc == best_score_gm_val:
-                if best_score_gm < gm_acc:
+            if lr_valid_acc == best_score_lr_val:
+                if best_score_lr < lr_acc:
                     
                     best_epoch_lr = epoch
                     best_score_lr_val = lr_valid_acc
@@ -535,6 +557,7 @@ for lo in range(0,num_runs):
                 best_score_gm_recall  = gm_recall
                 stop_pahle = []
                 stop_pahle_gm = []
+            print('Best score lr val is ', best_score_lr_val , ' at epoch ', epoch)
             checkpoint = {'theta': theta,'pi': pi}
             # torch.save(checkpoint, save_folder+"/gm_"+str(epoch)    +".pt")
             checkpoint = {'params': lr_model.state_dict()}
@@ -543,8 +566,9 @@ for lo in range(0,num_runs):
 
 
         # if len(stop_pahle) > 20 and len(stop_pahle_gm) > 20 and (all(best_score_lr_val >= k for k in stop_pahle) and all(best_score_gm_val >= k for k in stop_pahle_gm)):
-        if len(stop_pahle) > 10 and len(stop_pahle_gm) > 10 and (all(best_score_lr_val >= k for k in stop_pahle)):
-    #    if  len(stop_pahle_gm) > 10 and all(best_score_gm_val >= k for k in stop_pahle_gm):
+        # if len(stop_pahle) > 10 and len(stop_pahle_gm) > 10 and (all(best_score_lr_val >= k for k in stop_pahle)):
+        # if len(stop_pahle) > 10  and (all(best_score_lr_val >= k for k in stop_pahle)):
+        if len(stop_pahle_gm) > 10 and all(best_score_gm_val >= k for k in stop_pahle_gm):
         
             print('Early Stopping at', best_epoch_gm, best_score_gm, best_score_lr)
             print('Validation score Early Stopping at', best_epoch_gm, best_score_lr_val, best_score_gm_val)
@@ -582,8 +606,8 @@ print("TEST Precision average scores are for LR", np.mean(best_score_lr_prec))
 print("TEST Recall average scores are for LR", np.mean(best_score_lr_recall))
 print("===================================================")
 print("TEST Averaged scores are for GM",  np.mean(final_score_gm))
-#print("TEST Precision average scores are for GM", np.mean(final_score_gm_prec))
-#print("TEST Recall average scores are for GM", np.mean(final_score_gm_recall))
+print("TEST Precision average scores are for GM", np.mean(final_score_gm_prec))
+print("TEST Recall average scores are for GM", np.mean(final_score_gm_recall))
 print("===================================================")
 print("VALIDATION Averaged scores are for GM,LR", np.mean(final_score_gm_val), np.mean(final_score_lr_val))
 print("TEST STD  are for GM,LR", np.std(final_score_gm), np.std(final_score_lr))

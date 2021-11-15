@@ -43,7 +43,7 @@ def parse_file(filename):
         
         if 'NUM' in genre:
             plots.append(tweet_txt)
-            gt.append(-1)
+            gt.append(0)
             idx.append(i)
         elif 'LOC' in genre:
             plots.append(tweet_txt)
@@ -113,7 +113,7 @@ class DataLoader(object):
 
         return common_idx
 
-    def load_data(self, dataset, data_path='~/auto_lfs/reef/data/trec/',split_val=0.1, feat = 'count'):
+    def load_data(self, dataset, data_path='/home/ayusham/auto_lfs/reef/data/trec/',split_val=0.1, feat = 'count'):
      
         plots, labels = parse_file(data_path+'all.txt')
 
@@ -147,17 +147,17 @@ class DataLoader(object):
         train_primitive_matrix, val_primitive_matrix, test_primitive_matrix, \
         train_ground, val_ground, test_ground,\
         train_plots, val_plots, test_plots = split_data(X, plots, labels, split_val)
-
+        common_idx = []
         #Prune Feature Space
-        common_idx = self.prune_features(val_primitive_matrix, train_primitive_matrix)
-        print('common_idx',len(common_idx))
+        # common_idx = self.prune_features(val_primitive_matrix, train_primitive_matrix)
+        # print('common_idx',len(common_idx))
 #         return train_primitive_matrix[:,common_idx], val_primitive_matrix[:,common_idx], test_primitive_matrix[:,common_idx],             np.array(train_ground), np.array(val_ground), np.array(test_ground),train_plots, val_plots, test_plots
-#         return train_primitive_matrix, val_primitive_matrix, test_primitive_matrix, \
-#                 np.array(train_ground), np.array(val_ground), np.array(test_ground), vectorizer, valid_feats, common_idx, \
-#             train_plots, val_plots, test_plots
-
-        return train_primitive_matrix[:,common_idx], val_primitive_matrix[:,common_idx], test_primitive_matrix[:,common_idx], \
+        return train_primitive_matrix, val_primitive_matrix, test_primitive_matrix, \
                 np.array(train_ground), np.array(val_ground), np.array(test_ground), vectorizer, valid_feats, common_idx, \
             train_plots, val_plots, test_plots
+
+        # return train_primitive_matrix[:,common_idx], val_primitive_matrix[:,common_idx], test_primitive_matrix[:,common_idx], \
+        #         np.array(train_ground), np.array(val_ground), np.array(test_ground), vectorizer, valid_feats, common_idx, \
+        #     train_plots, val_plots, test_plots
 
 
