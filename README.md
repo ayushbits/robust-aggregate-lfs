@@ -1,4 +1,4 @@
-## How to replicate results 
+## How to reproduce results 
 
 * CUDA_LAUNCH_BLOCKING=0 python3 gpu_rewt_ss_generic.py /tmp l1 0 l3 l4 0 l6 qg 5 <dataset_path> <num_class> nn 0 <batch_size> <lr_learning_rate> <gm_learning_rate> normal f1 
 
