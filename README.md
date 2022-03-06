@@ -1,6 +1,7 @@
 ## How to reproduce results 
 
-* CUDA_LAUNCH_BLOCKING=0 python3 gpu_rewt_ss_generic.py /tmp l1 0 l3 l4 0 l6 qg 5 <dataset_path> <num_class> nn 0 <batch_size> <lr_learning_rate> <gm_learning_rate> normal f1 
+
+1. CUDA_LAUNCH_BLOCKING=0 python3 gpu_rewt_ss_generic.py /tmp l1 0 l3 l4 0 l6 qg 5 <dataset_path> <num_class> nn 0 <batch_size> <lr_learning_rate> <gm_learning_rate> normal f1 
 
 - <dataset_path> is the path to the directory of the stored LFs
 - <num_class> is number of classes in the dataset (for eg, TREC has 6 classes and SMS has 2 classes)
@@ -11,7 +12,8 @@
 
 
 ### How to automatically generate LFs
-* python generate_human_lfs.py dataset(imdb/trec/sms/youtube) count/lemma savetype(dict/lemma)
+1. cd reef/
+2. python generate_human_lfs.py dataset(imdb/trec/sms/youtube) count/lemma savetype(dict/lemma)
 
 - 1st argument is dataset name (i.e imdb/trec/sms/youtube/sst5/twitter)
 - 2nd argument generation of raw (count) or lemmatized feature (lemma) 
