@@ -2,7 +2,7 @@
 # save directory (6) #model_for_feature_keras (lstm/count/lemma) (7)
 
 
-# python generic_generate_labels.py imdb normal dt 1 26 imdb_val2.5_sup5_dt1
+# python generic_generate_labels.py imdb normal dt 1 26 imdb_val2.5_sup5_dt1 count/lemma/lstm
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -114,8 +114,6 @@ for j in range(0,1):
         hf = []
         va,ta, vc, tc, val_lfs, train_lfs, test_lfs, hf = hg.evaluate()
         HF = hf
-        print(hf)
-        break
         validation_accuracy.append(va)
         training_accuracy.append(ta)
         training_marginals.append(hg.vf.train_marginals)
@@ -145,6 +143,7 @@ for j in range(0,1):
             np.save(os.path.join(save_path ,test_file_name), test_lfs)
             print('indexes exhausted... now saving labels')
             break
+    #print('vali acuuracy', validation_accuracy)
     vals.append(validation_accuracy[-1])
     print ("Program Synthesis Train Accuracy: ", training_accuracy[-1])
     print ("Program Synthesis Train Coverage: ", training_coverage[-1])
