@@ -327,8 +327,9 @@ print('Final Size of d set , U set  , validation set , test set', len(d_L), len(
 # # ### Save Training Set Labels 
 # # We save the training set labels Reef generates that we use in the next notebook to train a simple LSTM model.
 
-for i in hg.heuristic_stats().iloc[:len(idx)]['Feat 1']:
-    print(x[int(i)])
+with open (os.path.join(pickle_save, 'generatedLFs.txt'), 'w') as f:
+    for j, i in zip(lx, hg.heuristic_stats().iloc[:len(idx)]['Feat 1']):
+        f.write(str(j) + ',' + x[int(i)] + '\n')
 
 filepath = './generated_data/' + dataset 
 file_name = mode + '_reef.npy'
