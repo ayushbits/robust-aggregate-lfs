@@ -208,6 +208,7 @@ d_text = val_text[:upto]
 val_text = val_text[upto:]
 test_text = test_text
 
+pickle_save = "LFs/"+ dataset + "/" + save_dir
 def write_txt(name, objs):
     with open(os.path.join(pickle_save , name+'.txt'), 'w') as f:
         for i in objs:
@@ -229,7 +230,7 @@ d_l, d_m = lsnork_to_l_m(d_l, num_classes)
 
 save_dir = sys.argv[6]
 
-pickle_save = "LFs/"+ dataset + "/" + save_dir
+
 
 
 file_name = mode + '_d_processed.p'
