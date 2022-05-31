@@ -18,3 +18,14 @@
 - 1st argument is dataset name (i.e imdb/trec/sms/youtube/sst5/twitter)
 - 2nd argument generation of raw (count) or lemmatized feature (lemma) 
 - 3rd argument is path of the directory to save the generated LFs
+
+### Generate LFs from snuba
+1. cd reef/
+2. python generic_generate_labels.py youtube normal dt 1 26 yt_val2.5_sup5_dt1 count
+
+- 1st argument is dataset name (i.e imdb/trec/sms/youtube/sst5/twitter)
+- 2nd argument is prefix of generated pkl files
+- 3rd argument is number of LFs per step
+- 4th argument is number of epochs
+- 5th argument is storage path (LFs/data/youtube/<storage_path>) where pkl files will be stored
+- 6th argument is type of features
