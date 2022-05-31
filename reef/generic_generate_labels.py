@@ -22,12 +22,15 @@ loader_file = "data." + dataset+"_loader"
 
 import importlib
 
+
 load = importlib.import_module(loader_file)
 feats = sys.argv[7]
 dl = load.DataLoader()
 train_primitive_matrix, val_primitive_matrix, test_primitive_matrix, train_ground,\
     val_ground, test_ground, vizer, val_idx, common_idx, train_text, val_text, test_text\
      = dl.load_data(dataset=dataset, split_val = 0.1, feat = feats)
+
+print('test length ', len(test_ground))
 
 x = [vizer.get_feature_names()[val_idx[i]] for i in common_idx ]
 
@@ -200,6 +203,20 @@ d_L, U_L = val_ground[:upto], train_ground#[upto: ]
 d_x, U_x = val_primitive_matrix[:upto], train_primitive_matrix#[upto: ] #features
 d_l, U_l = valx[:upto,:], trx#[upto:,:] #LFs
 
+U_text = train_text
+d_text = val_text[:upto]
+val_text = val_text[upto:]
+test_text = test_text
+
+def write_txt(name, objs):
+    with open(os.path.join(pickle_save , name+'.txt'), 'w') as f:
+        for i in objs:
+            f.write(i+'\n')
+
+write_txt('U', U_text)
+write_txt('d', d_text)
+write_txt('val', val_text)
+write_txt('test', test_text)
 
 d_d = np.array([1.0] * len(d_x))
 d_r = np.zeros(d_l.shape) #rule exemplar coupling unavailable
