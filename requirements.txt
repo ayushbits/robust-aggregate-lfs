@@ -39,4 +39,3 @@ torchfile==0.1.0
 torchvision==0.7.0+cpu
 tornado==6.1
 tqdm==4.46.0
-Twisted==18.9.0
