@@ -10,9 +10,10 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from losses import *
 import pickle
 from torch.utils.data import TensorDataset, DataLoader
-import wandb
-wandb.init(project='generic', entity='spear-plus')
-conf = wandb.config
+
+# import wandb
+# wandb.init(project='generic', entity='spear-plus')
+# conf = wandb.config
 # CUDA for PyTorch
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda:0" if use_cuda else "cpu")
@@ -20,6 +21,8 @@ torch.backends.cudnn.benchmark = True
 
 torch.set_default_dtype(torch.float64)
 torch.set_printoptions(threshold=20)
+seed = 17#7,25
+torch.manual_seed(seed)
 
 objs = []
 dset_directory = sys.argv[10]
@@ -33,9 +36,9 @@ name_dset = dset_directory.split("/")[-1].lower()
 print('dset is ', name_dset)
 mode = sys.argv[17] #''
 metric = sys.argv[18]
-conf.learning_rate = lr_fnetwork #wandb
-wrunname = name_dset + "_" + mode +"_generic"#wandb
-wandb.run.name = wrunname #wandb
+# conf.learning_rate = lr_fnetwork #wandb
+# wrunname = name_dset + "_" + mode +"_generic"#wandb
+# wandb.run.name = wrunname #wandb
 
 
 from sklearn.metrics import precision_score as prec_score
@@ -241,7 +244,7 @@ for lo in range(0,num_runs):
     pi_y.requires_grad = True
 
     if feat_model == 'lr':
-        lr_model = LogisticRegression(n_features, n_classes)
+        lr_model = LogisticRegression(n_features, n_classes,  seed = seed)
     elif feat_model =='nn':
         n_hidden = 512
         lr_model = DeepNet(n_features, n_hidden, n_classes)
@@ -341,8 +344,8 @@ for lo in range(0,num_runs):
                 loss.backward()
                 optimizer_gm.step()
                 optimizer_lr.step()
-        wname = "Run_"+str(lo)+" Train Loss" #wandb
-        wandb.log({wname:loss, 'custom_step':epoch}) #wandb
+        # wname = "Run_"+str(lo)+" Train Loss" #wandb
+        # wandb.log({wname:loss, 'custom_step':epoch}) #wandb
         y_pred = np.argmax(probability(theta, pi_y, pi, l_test, s_test, k, n_classes, continuous_mask).detach().numpy(), 1)
         if metric=='accuracy':
             gm_acc = score(y_test, y_pred)
@@ -392,10 +395,10 @@ for lo in range(0,num_runs):
 #         print("Epoch: {}\tGM accuracy_score(Valid): {}".format(epoch, gm_valid_acc))
         print("Epoch: {}\tTest LR accuracy_score: {}".format(epoch, lr_acc))    
 #         print("Epoch: {}\tLR accuracy_score(Valid): {}".format(epoch, lr_valid_acc))
-        wname = "Run_"+str(lo)+" LR valid score"
-        wnamegm = 'Run_' + str(lo) + ' GM valid score'
-        wandb.log({wname:lr_valid_acc, 
-            wnamegm:gm_valid_acc,'custom_step':epoch})
+        # wname = "Run_"+str(lo)+" LR valid score"
+        # wnamegm = 'Run_' + str(lo) + ' GM valid score'
+        # wandb.log({wname:lr_valid_acc, 
+        #     wnamegm:gm_valid_acc,'custom_step':epoch})
 
         if epoch > 1 and gm_valid_acc >= best_score_gm_val and gm_valid_acc >= best_score_lr_val:
             # print("Inside Best hu Epoch: {}\t Test GM accuracy_score: {}".format(epoch, gm_acc ))
@@ -520,6 +523,6 @@ print("VALIDATION Averaged scores are for GM,LR", np.mean(final_score_gm_val), n
 print("TEST STD  are for GM,LR", np.std(final_score_gm), np.std(final_score_lr))
 print("VALIDATION STD  are for GM,LR", np.std(final_score_gm_val), np.std(final_score_lr_val))
 
-wandb.log({'test_lr':np.mean(final_score_lr),'test_gm':np.mean(final_score_gm)})#wandb
-wandb.log({'test_mean_GM ':np.mean(final_score_lr), 'test_mean_GM': np.mean(final_score_gm)}) #wandb
-wandb.log({'test_STD_LR ':np.std(final_score_lr), 'test_STD_GM': np.std(final_score_gm)}) #wandb
+# wandb.log({'test_lr':np.mean(final_score_lr),'test_gm':np.mean(final_score_gm)})#wandb
+# wandb.log({'test_mean_GM ':np.mean(final_score_lr), 'test_mean_GM': np.mean(final_score_gm)}) #wandb
+# wandb.log({'test_STD_LR ':np.std(final_score_lr), 'test_STD_GM': np.std(final_score_gm)}) #wandb

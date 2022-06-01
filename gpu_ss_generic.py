@@ -1,5 +1,7 @@
 #CUDA_LAUNCH_BLOCKING=0 python3 gpu_ss_generic.py /tmp l1 0 l3 l4 0 l6 qg 1 ../Semi_Supervised_LFs/Data/TREC 6 nn 0 32 0.0003 0.01 none f1 adjust
 
+#CUDA_LAUNCH_BLOCKING=0 python gpu_ss_generic.py /tmp l1 0 l3 l4 0 l6 qg 1 reef/LFs/youtube/yt_val2.5_sup2.5_dt1/ 2 nn 0 32 0.0003 0.01 normal f1 
+
 import torch
 import sys
 import numpy as np
@@ -25,6 +27,8 @@ torch.backends.cudnn.benchmark = True
 
 torch.set_default_dtype(torch.float64)
 torch.set_printoptions(threshold=20)
+seed = 17#7,25
+torch.manual_seed(seed)
 
 
 
@@ -41,7 +45,7 @@ dataset = dset_directory.split("/")[-2].lower()
 print('dset is ', dataset, name_dset)
 mode = sys.argv[17] #''
 metric = sys.argv[18]
-adjust = sys.argv[19]
+# adjust = sys.argv[19]
 # conf.learning_rate = lr_fnetwork #wandb
 # wrunname = name_dset + "_" + mode +"_generic"#wandb
 # wandb.run.name = wrunname #wandb
@@ -139,24 +143,24 @@ y_valid = torch.tensor(objs[3]).long()
 l_valid = torch.tensor(objs[2]).long()
 s_valid = torch.tensor(objs[2]).double()
 print('Valid shape', x_valid.shape)
-adjust = 'adjust'
-if adjust =='adjust':
-    tmp = torch.cat((x_supervised, x_valid))
-    leng = int(len(tmp)/2)
+# adjust = 'adjust'
+# if adjust =='adjust':
+#     tmp = torch.cat((x_supervised, x_valid))
+#     leng = int(len(tmp)/2)
 
-    x_supervised, x_valid = tmp[0:leng], tmp[leng:]
+#     x_supervised, x_valid = tmp[0:leng], tmp[leng:]
 
-    tmp = torch.cat((y_supervised, y_valid))
-    y_supervised, y_valid = tmp[0:leng], tmp[leng:]
+#     tmp = torch.cat((y_supervised, y_valid))
+#     y_supervised, y_valid = tmp[0:leng], tmp[leng:]
 
-    tmp = torch.cat((s_supervised, s_valid))
-    s_supervised, s_valid = tmp[0:leng], tmp[leng:]
+#     tmp = torch.cat((s_supervised, s_valid))
+#     s_supervised, s_valid = tmp[0:leng], tmp[leng:]
 
-    tmp = torch.cat((l_supervised, l_valid))
-    l_supervised, l_valid = tmp[0:leng], tmp[leng:]
+#     tmp = torch.cat((l_supervised, l_valid))
+#     l_supervised, l_valid = tmp[0:leng], tmp[leng:]
 
-print('after adjusting Valid shape', x_valid.shape)
-print('after adjusting supervised shape', x_supervised.shape)
+# print('after adjusting Valid shape', x_valid.shape)
+# print('after adjusting supervised shape', x_supervised.shape)
 # exit()
 objs1 = []
 if mode =='normal':
@@ -285,19 +289,19 @@ for lo in range(0,num_runs):
     pi_y.requires_grad = True
 
     if feat_model == 'lr':
-        lr_model = LogisticReg(n_features, n_classes).to(device=device)
+        lr_model = LogisticReg(n_features, n_classes,  seed = seed).to(device=device)
         # print(lr_model)
         supervised_criterion = torch.nn.CrossEntropyLoss()
     elif feat_model =='nn':
         n_hidden = 512
-        lr_model = DeepNet(n_features, n_hidden, n_classes).to(device=device)
+        lr_model = DeepNet(n_features, n_hidden, n_classes,  seed = seed).to(device=device)
         supervised_criterion = torch.nn.CrossEntropyLoss()
     elif feat_model == 'lstm':
         mkt = MakeTokens()
         _,_,_, vocab_size, embedding_vector_length, max_sentence_length =\
          mkt.make(train_text, val_text, test_text)
         print('vocab size is ', vocab_size)
-        lr_model = DeepLSTM(vocab_size=vocab_size, embedding_vector_length=32, max_sentence_length=500).to(device=device)
+        lr_model = DeepLSTM(vocab_size=vocab_size, embedding_vector_length=32, max_sentence_length=500,  seed = seed).to(device=device)
         supervised_criterion = torch.nn.BCELoss()
     else:
         print('Please provide feature based model : lr or nn')

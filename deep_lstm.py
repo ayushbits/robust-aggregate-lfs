@@ -41,6 +41,7 @@ class DeepLSTM(nn.Module):
         self.lstm1 = nn.LSTM(input_size = embedding_vector_length, hidden_size = self.hidden_size, batch_first=True)
         self.out = nn.Linear(self.hidden_size, num_classes)
         self.sig = nn.Sigmoid()
+        torch.manual_seed(seed)
 
     def forward(self, x):
         emb = self.emb(x)
