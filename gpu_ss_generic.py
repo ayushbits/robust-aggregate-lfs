@@ -256,13 +256,24 @@ y_train = torch.cat([y_supervised, y_unsupervised])
 supervised_mask = torch.cat([torch.ones(l_supervised.shape[0]), torch.zeros(l_unsupervised.shape[0])])
 
 
-## Quality Guides ##
+def check_stopping_cond(self, epoch, val_acc, continuous_epochs):
+    save, cont = None, None
+    if val_acc > self.best_score:
+        self.best_score = val_acc
+        self.best_epoch = epoch
+        print('Best Score ', self.best_score , ' at epoch ', self.best_epoch)
+        save = 1
+        cont = 1
+        
+
+    if epoch > self.best_epoch + continuous_epochs-1:
+        print('Leaving Early.. Bye !')
+        print('Best Score ', self.best_score , ' at epoch ', self.best_epoch)
+        save = 0
+        cont = 0
+    return save, cont
 
 
-
-## End Quality Quides##
-# a =  torch.tensor(np.load(dset_directory + '/precision_values.npy'))
-# print('after ',a)
 
 #Setting |validation|=|supevised|
 # x_valid = x_valid[0:len(x_supervised)]
