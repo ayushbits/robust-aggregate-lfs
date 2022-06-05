@@ -21,6 +21,7 @@ print('dataset is ', dataset)
 loader_file = "data." + dataset+"_loader"
 
 import importlib
+save_dir = sys.argv[6]
 
 load = importlib.import_module(loader_file)
 feats = sys.argv[7]
@@ -28,6 +29,31 @@ dl = load.DataLoader()
 train_primitive_matrix, val_primitive_matrix, test_primitive_matrix, train_ground,\
     val_ground, test_ground, vizer, val_idx, common_idx, train_text, val_text, test_text\
      = dl.load_data(dataset=dataset, split_val = 0.1, feat = feats)
+
+print('test length ', len(test_ground))
+
+# upto = int(len(val_ground)/2 ) # Size of d set i.e. Labelled set
+# d_L, U_L = val_ground[:upto], train_ground#[upto: ]
+# d_x, U_x = val_primitive_matrix[:upto], train_primitive_matrix#[upto: ] #features
+# d_l, U_l = valx[:upto,:], trx#[upto:,:] #LFs
+
+# U_text = train_text
+# d_text = val_text[:upto]
+# val_text = val_text[upto:]
+# test_text = test_text[:500]
+
+# pickle_save = "LFs/"+ dataset + "/" + save_dir
+# def write_txt(name, objs):
+#     with open(os.path.join(pickle_save , name+'.txt'), 'w') as f:
+#         for i in objs:
+#             f.write(i+'\n')
+
+# write_txt('U', U_text)
+# write_txt('d', d_text)
+# write_txt('val', val_text)
+# write_txt('test', test_text)
+
+# exit()
 
 x = [vizer.get_feature_names()[val_idx[i]] for i in common_idx ]
 
@@ -200,6 +226,21 @@ d_L, U_L = val_ground[:upto], train_ground#[upto: ]
 d_x, U_x = val_primitive_matrix[:upto], train_primitive_matrix#[upto: ] #features
 d_l, U_l = valx[:upto,:], trx#[upto:,:] #LFs
 
+U_text = train_text
+d_text = val_text[:upto]
+val_text = val_text[upto:]
+test_text = test_text
+
+pickle_save = "LFs/"+ dataset + "/" + save_dir
+def write_txt(name, objs):
+    with open(os.path.join(pickle_save , name+'.txt'), 'w') as f:
+        for i in objs:
+            f.write(i+'\n')
+
+write_txt('U', U_text)
+write_txt('d', d_text)
+write_txt('val', val_text)
+write_txt('test', test_text)
 
 d_d = np.array([1.0] * len(d_x))
 d_r = np.zeros(d_l.shape) #rule exemplar coupling unavailable
@@ -210,9 +251,9 @@ d_l[np.where(d_l==0)]=-1
 d_l[np.where(d_l==10)]=0
 d_l, d_m = lsnork_to_l_m(d_l, num_classes)
 
-save_dir = sys.argv[6]
 
-pickle_save = "LFs/"+ dataset + "/" + save_dir
+
+
 
 
 file_name = mode + '_d_processed.p'
@@ -326,7 +367,6 @@ print('Final Size of d set , U set  , validation set , test set', len(d_L), len(
 
 # # ### Save Training Set Labels 
 # # We save the training set labels Reef generates that we use in the next notebook to train a simple LSTM model.
-
 with open (os.path.join(pickle_save, 'generatedLFs.txt'), 'w') as f:
     for j, i in zip(lx, hg.heuristic_stats().iloc[:len(idx)]['Feat 1']):
         f.write(str(j) + ',' + x[int(i)] + '\n')
